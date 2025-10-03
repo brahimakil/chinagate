@@ -1,0 +1,159 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Young+Serif&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Beautiful Website Background */
+body {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 25%, #cbd5e1 50%, #94a3b8 75%, #64748b 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animated Background Elements */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(148, 163, 184, 0.15) 0%, transparent 50%);
+  animation: backgroundShift 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -2;
+}
+
+/* Floating Shapes */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(6, 182, 212, 0.1) 0%, transparent 25%),
+    radial-gradient(circle at 85% 25%, rgba(59, 130, 246, 0.08) 0%, transparent 30%),
+    radial-gradient(circle at 25% 75%, rgba(99, 102, 241, 0.12) 0%, transparent 35%),
+    radial-gradient(circle at 75% 85%, rgba(168, 85, 247, 0.09) 0%, transparent 28%);
+  animation: floatShapes 25s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Content Background */
+main, .main-content {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
+}
+
+/* Header and Footer Background */
+header, footer {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Animations */
+@keyframes backgroundShift {
+  0%, 100% { 
+    transform: translateX(0px) translateY(0px) scale(1); 
+    opacity: 1;
+  }
+  25% { 
+    transform: translateX(20px) translateY(-15px) scale(1.05); 
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translateX(-10px) translateY(25px) scale(0.95); 
+    opacity: 1;
+  }
+  75% { 
+    transform: translateX(15px) translateY(-20px) scale(1.02); 
+    opacity: 0.9;
+  }
+}
+
+@keyframes floatShapes {
+  0%, 100% { 
+    transform: translateX(0px) translateY(0px) rotate(0deg) scale(1); 
+  }
+  33% { 
+    transform: translateX(-30px) translateY(20px) rotate(120deg) scale(1.1); 
+  }
+  66% { 
+    transform: translateX(25px) translateY(-15px) rotate(240deg) scale(0.9); 
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Young Serif", serif;
+}
+
+@layer base {
+  html {
+    font-family: "Poppins", sans-serif;
+  }
+}
+
+p,
+span {
+  @apply text-slate-600;
+}
+
+input {
+  @apply focus:ring-cyan-500 focus:border-cyan-500 focus:outline-cyan-500;
+}
+
+::selection {
+  @apply bg-cyan-600 text-white;
+}
+
+[type="text"],
+[type="email"],
+[type="password"],
+[type="number"],
+[type="tel"],
+[type="search"] {
+  @apply form-input rounded text-sm bg-white/90;
+}
+
+input,
+textarea,
+select {
+  @apply focus:!ring-0 focus:!outline-0 focus:!outline-offset-0 focus:!border-cyan-400 bg-white/90;
+}
+
+textarea {
+  @apply form-textarea rounded text-sm resize-none bg-white/90;
+}
+
+select {
+  @apply form-select rounded text-sm resize-none bg-white/90;
+}
+
+/* Card and Container Backgrounds */
+.bg-white {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(8px);
+}
+
+/* Ensure sections have proper backgrounds */
+section {
+  position: relative;
+}

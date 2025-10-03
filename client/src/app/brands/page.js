@@ -1,0 +1,468 @@
+/**
+ * Title: Brands Ecosystem Page
+ * Author: China Gate Team
+ * Date: 26, September 2025
+ */
+
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
+import Main from "@/components/shared/layouts/Main";
+import Container from "@/components/shared/Container";
+import Image from "next/image";
+import { useGetBrandsQuery } from "@/services/brand/brandApi";
+import { useGetCategoriesQuery } from "@/services/category/categoryApi";
+import { useGetProductsQuery } from "@/services/product/productApi";
+import { BsBoxSeam, BsGrid3X3Gap } from "react-icons/bs";
+import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import Niche from "@/components/shared/skeletonLoading/Niche";
+
+const BrandsPage = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [viewMode, setViewMode] = useState("ecosystem"); // ecosystem, grid
+  const [isVisible, setIsVisible] = useState(false);
+  const router = useRouter();
+
+  const {
+    data: brandsData,
+    error: brandsError,
+    isLoading: fetchingBrands,
+  } = useGetBrandsQuery();
+
+  const {
+    data: categoriesData,
+    isLoading: fetchingCategories,
+  } = useGetCategoriesQuery();
+
+  const {
+    data: productsData,
+    isLoading: fetchingProducts,
+  } = useGetProductsQuery();
+
+  const brands = useMemo(() => brandsData?.data || [], [brandsData]);
+  const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
+  const products = useMemo(() => productsData?.data || [], [productsData]);
+
+  // Create brand-category connections
+  const brandCategoryConnections = useMemo(() => {
+    return brands.map(brand => {
+      const brandProducts = products.filter(product => product.brand?._id === brand._id);
+      const brandCategories = [...new Set(brandProducts.map(product => product.category?._id))];
+      const categoriesWithProducts = brandCategories.map(categoryId => {
+        const category = categories.find(cat => cat._id === categoryId);
+        const categoryProductCount = brandProducts.filter(product => product.category?._id === categoryId).length;
+        return {
+          ...category,
+          productCount: categoryProductCount
+        };
+      }).filter(Boolean);
+
+      return {
+        ...brand,
+        categories: categoriesWithProducts,
+        totalProducts: brandProducts.length
+      };
+    });
+  }, [brands, categories, products]);
+
+  // Filter brands
+  const filteredBrands = useMemo(() => {
+    let filtered = brandCategoryConnections.filter((brand) => {
+      const matchesSearch = brand.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        brand.description.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = selectedCategory === "all" || 
+        brand.categories.some(cat => cat._id === selectedCategory);
+      
+      return matchesSearch && matchesCategory;
+    });
+
+    return filtered.sort((a, b) => b.totalProducts - a.totalProducts);
+  }, [brandCategoryConnections, searchTerm, selectedCategory]);
+
+  useEffect(() => {
+    if (brandsError) {
+      toast.error(brandsError?.data?.description, {
+        id: "brands-error",
+      });
+    }
+  }, [brandsError]);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  const handleBrandClick = (brandId) => {
+    router.push(`/collections/all?brand=${brandId}`);
+  };
+
+  const handleCategoryClick = (brandId, categoryId) => {
+    router.push(`/collections/all?brand=${brandId}&category=${categoryId}`);
+  };
+
+  if (fetchingBrands || fetchingCategories || fetchingProducts) {
+    return (
+      <Main>
+        <div className="min-h-screen bg-white">
+          <Container>
+            <div className="py-20">
+              <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-8">
+                {[1, 2, 3, 4, 5, 6].map((_, index) => (
+                  <Niche key={index} />
+                ))}
+              </div>
+            </div>
+          </Container>
+        </div>
+      </Main>
+    );
+  }
+
+  return (
+    <Main>
+      <div className="min-h-screen bg-white">
+        <Container>
+          <div className="py-20">
+            {/* Header Section */}
+            <div 
+              className={`text-center mb-16 transform transition-all duration-1000 ${
+                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+              }`}
+            >
+              <h1 className="text-5xl font-bold text-black mb-4">
+                Brand <span className="text-black">Ecosystem</span>
+              </h1>
+              <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+                Explore our premium brands and discover their category specializations. Each brand tells a unique story.
+              </p>
+              <div className="mt-8 w-24 h-1 bg-black mx-auto rounded-full"></div>
+            </div>
+
+            {/* Controls Section */}
+            <div 
+              className={`mb-12 transform transition-all duration-1000 delay-200 ${
+                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+              }`}
+            >
+              <div className="bg-neutral-100/70 rounded-primary shadow-lg p-8 border border-gray-100">
+                <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
+                  {/* Search Bar */}
+                  <div className="relative flex-1 max-w-md">
+                    <input
+                      type="text"
+                      placeholder=" Search brands..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="block w-full px-4 py-3 border border-gray-300 rounded-secondary leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-center"
+                    />
+                  </div>
+
+                  {/* Category Filter */}
+                  <div className="flex items-center space-x-4">
+                    <label className="text-sm font-medium text-gray-700">Category:</label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="border border-gray-300 rounded-secondary px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map((category) => (
+                        <option key={category._id} value={category._id}>
+                          {category.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center space-x-2 bg-white rounded-secondary p-1 border">
+                    <button
+                      onClick={() => setViewMode("ecosystem")}
+                      className={`px-4 py-2 rounded-secondary text-sm font-medium transition-all duration-300 ${
+                        viewMode === "ecosystem" 
+                          ? "bg-black text-white" 
+                          : "text-gray-600 hover:text-black"
+                      }`}
+                    >
+                      Ecosystem
+                    </button>
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`px-4 py-2 rounded-secondary text-sm font-medium transition-all duration-300 ${
+                        viewMode === "grid" 
+                          ? "bg-black text-white" 
+                          : "text-gray-600 hover:text-black"
+                      }`}
+                    >
+                      <BsGrid3X3Gap className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Results Count */}
+                  <div className="text-sm text-gray-600">
+                    {filteredBrands.length} brand{filteredBrands.length === 1 ? '' : 's'} found
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Brands Display */}
+            <div 
+              className={`transform transition-all duration-1000 delay-400 ${
+                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+              }`}
+            >
+              {filteredBrands.length > 0 ? (
+                viewMode === "ecosystem" ? (
+                  <EcosystemView brands={filteredBrands} onBrandClick={handleBrandClick} onCategoryClick={handleCategoryClick} />
+                ) : (
+                  <GridView brands={filteredBrands} onBrandClick={handleBrandClick} />
+                )
+              ) : (
+                <div className="text-center py-20">
+                  <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                    <BsBoxSeam className="w-10 h-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-medium text-black mb-2">No brands found</h3>
+                  <p className="text-slate-600">Try adjusting your search terms or filters.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Call to Action */}
+            {filteredBrands.length > 0 && (
+              <div 
+                className={`text-center mt-20 transform transition-all duration-1000 delay-600 ${
+                  isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                }`}
+              >
+                <div 
+                  className="bg-[#f8f0ea] rounded-primary p-8 text-black relative"
+                  style={{ backgroundImage: "url(/assets/home/banner/dots.svg)" }}
+                >
+                  <h2 className="text-3xl font-bold mb-4">Discover More Amazing Brands</h2>
+                  <p className="text-lg mb-6 text-slate-600">
+                    Explore our complete product catalog and find your perfect match across all categories.
+                  </p>
+                  <button
+                    onClick={() => router.push('/collections/all')}
+                    className="px-8 py-4 border border-black rounded-secondary bg-black hover:bg-black/90 text-white transition-colors drop-shadow w-fit"
+                  >
+                    Browse All Products
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Container>
+      </div>
+    </Main>
+  );
+};
+
+// Ecosystem View Component
+const EcosystemView = ({ brands, onBrandClick, onCategoryClick }) => {
+  return (
+    <div className="space-y-12">
+      {brands.map((brand, index) => (
+        <div
+          key={brand._id}
+          className={`group bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-black hover:shadow-2xl transition-all duration-500 animate-fade-in-up`}
+          style={{ animationDelay: `${index * 200}ms` }}
+        >
+          {/* Brand Header */}
+          <div 
+            className="p-8 bg-gradient-to-r from-gray-50 to-white cursor-pointer"
+            onClick={() => onBrandClick(brand._id)}
+          >
+            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
+              {/* Brand Logo */}
+              <div className="flex-shrink-0">
+                <Image
+                  src={brand?.logo?.url}
+                  alt={brand?.title}
+                  width={80}
+                  height={80}
+                  className="w-20 h-20 object-cover rounded-lg border-2 border-white shadow-lg group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+
+              {/* Brand Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div>
+                    <h2 className="text-3xl font-bold text-black group-hover:text-black transition-colors duration-300">
+                      {brand.title}
+                    </h2>
+                    <p className="text-slate-600 mt-2 line-clamp-2">
+                      {brand.description}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center space-x-6 text-sm">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-black">{brand.totalProducts}</div>
+                      <div className="text-slate-600">Products</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-black">{brand.categories.length}</div>
+                      <div className="text-slate-600">Categories</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Categories Network */}
+          {brand.categories.length > 0 && (
+            <div className="p-8 bg-white">
+              <h3 className="text-lg font-semibold text-black mb-6 flex items-center">
+                <BsGrid3X3Gap className="w-5 h-5 mr-2" />
+                Category Specializations
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {brand.categories.map((category, categoryIndex) => (
+                  <div
+                    key={category._id}
+                    className="group/category bg-gradient-to-br from-gray-50 to-white p-4 rounded-lg border border-gray-200 hover:border-black hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                    onClick={() => onCategoryClick(brand._id, category._id)}
+                    style={{ animationDelay: `${categoryIndex * 100}ms` }}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Image
+                        src={category?.thumbnail?.url}
+                        alt={category?.title}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 object-cover rounded group-hover/category:scale-110 transition-transform duration-300"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-black group-hover/category:text-black transition-colors">
+                          {category.title}
+                        </h4>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <BsBoxSeam className="w-3 h-3 text-indigo-500" />
+                          <span className="text-xs text-indigo-500 font-medium">
+                            {category.productCount} products
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-black group-hover/category:translate-x-1 transition-transform duration-300">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Brand Tags */}
+          {brand.tags && brand.tags.length > 0 && (
+            <div className="px-8 pb-6">
+              <div className="flex flex-wrap gap-2">
+                {brand.tags.map((tag, tagIndex) => (
+                  <span
+                    key={tagIndex}
+                    className="border text-xs px-2 py-1 rounded whitespace-nowrap bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Grid View Component
+const GridView = ({ brands, onBrandClick }) => {
+  return (
+    <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-8">
+      {brands.map((brand, index) => (
+        <div
+          key={brand._id}
+          className={`group bg-white border border-gray-200 rounded-lg p-6 hover:border-black hover:shadow-xl transition-all duration-500 cursor-pointer transform hover:-translate-y-2 animate-fade-in-up`}
+          style={{ animationDelay: `${index * 100}ms` }}
+          onClick={() => onBrandClick(brand._id)}
+        >
+          {/* Brand Image */}
+          <div className="relative mb-6 overflow-hidden rounded">
+            <Image
+              src={brand?.logo?.url}
+              alt={brand?.title}
+              width={200}
+              height={150}
+              className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+          </div>
+
+          {/* Brand Info */}
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-xl font-bold text-black group-hover:text-black transition-colors duration-300">
+                {brand?.title}
+              </h3>
+              <p className="text-sm text-slate-600 mt-2 line-clamp-2">
+                {brand?.description}
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4 text-sm">
+                <div className="flex items-center space-x-1">
+                  <BsBoxSeam className="w-4 h-4 text-indigo-500" />
+                  <span className="text-indigo-500 font-medium">
+                    {brand.totalProducts} Products
+                  </span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <BsGrid3X3Gap className="w-4 h-4 text-purple-500" />
+                  <span className="text-purple-500 font-medium">
+                    {brand.categories.length} Categories
+                  </span>
+                </div>
+              </div>
+              <div className="text-black group-hover:translate-x-1 transition-transform duration-300">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Top Categories */}
+            {brand.categories.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {brand.categories.slice(0, 2).map((category, categoryIndex) => (
+                  <span
+                    key={categoryIndex}
+                    className="border text-xs px-2 py-1 rounded whitespace-nowrap bg-gray-50"
+                  >
+                    {category.title}
+                  </span>
+                ))}
+                {brand.categories.length > 2 && (
+                  <span className="border text-xs px-2 py-1 rounded whitespace-nowrap text-gray-600">
+                    +{brand.categories.length - 2}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default BrandsPage;

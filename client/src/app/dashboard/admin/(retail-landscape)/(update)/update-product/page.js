@@ -1,0 +1,1277 @@
+"use client";
+
+import { useUpdateProductMutation, useGetProductQuery } from "@/services/product/productApi";
+import { useGetBrandsQuery } from "@/services/brand/brandApi";
+import { useGetCategoriesQuery } from "@/services/category/categoryApi";
+import { useGetStoresQuery } from "@/services/store/storeApi";
+import Dashboard from "@/components/shared/layouts/Dashboard";
+import { useState, useEffect, useMemo } from "react";
+import { toast } from "react-hot-toast";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import useGetColors from "@/libs/useGetColors";
+
+const Page = () => {
+  const searchParams = useSearchParams();
+  const productId = searchParams.get("id");
+
+  return (
+    <Dashboard>
+      <section className="w-full space-y-4">
+        <div className="w-full flex flex-row justify-between items-center">
+          <h1 className="text-2xl">Update Product</h1>
+        </div>
+        {productId && <UpdateProduct productId={productId} />}
+      </section>
+    </Dashboard>
+  );
+};
+
+function UpdateProduct({ productId }) {
+  const [thumbnail, setThumbnail] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [gallery, setGallery] = useState([]);
+  const [galleryPreviews, setGalleryPreviews] = useState([]);
+  const [features, setFeatures] = useState([{ title: "", content: [""] }]);
+  const router = useRouter();
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [colorSearch, setColorSearch] = useState("");
+  const [customAttributes, setCustomAttributes] = useState([{ name: "", value: "", unit: "" }]);
+  const [socialLinks, setSocialLinks] = useState([{ name: "", url: "" }]);
+  const [selectedSeason, setSelectedSeason] = useState(["all-season"]); // Changed to array
+  const [selectedProductStatus, setSelectedProductStatus] = useState(["regular"]); // Changed to array
+  const [isHidden, setIsHidden] = useState(false); // Add this line
+  
+  // Add these toggle state variables:
+  const [enableColors, setEnableColors] = useState(false);
+  const [enableCustomSpecs, setEnableCustomSpecs] = useState(false);
+  const [enableSocialLinks, setEnableSocialLinks] = useState(false);
+  const [enableStore, setEnableStore] = useState(false);
+  const [stock, setStock] = useState(0); // Add this line
+
+  // Form fields
+  const [productTitle, setProductTitle] = useState("");
+  const [productSummary, setProductSummary] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [productStock, setProductStock] = useState(0); // Add this line
+  const [productBrand, setProductBrand] = useState("");
+  const [productCategory, setProductCategory] = useState("");
+  const [productStore, setProductStore] = useState("");
+
+  const colorsData = useGetColors() || [];
+  
+  const filteredColors = useMemo(() => 
+    colorsData.filter(color => 
+      color.name.toLowerCase().includes(colorSearch.toLowerCase())
+    ), [colorsData, colorSearch]
+  );
+
+  // Add loading state:
+  const [updateProduct, { isLoading, data, error }] = useUpdateProductMutation();
+  const { data: productData, isLoading: fetchingProduct } = useGetProductQuery(productId);
+  const { data: brandsData } = useGetBrandsQuery();
+  const { data: categoriesData } = useGetCategoriesQuery();
+  const { data: storesData } = useGetStoresQuery();
+
+  const brands = useMemo(() => brandsData?.data || [], [brandsData]);
+  const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
+  const stores = useMemo(() => storesData?.data || [], [storesData]);
+  const product = useMemo(() => productData?.data || {}, [productData]);
+
+  // Load existing product data
+  useEffect(() => {
+    if (product && Object.keys(product).length > 0) {
+      setProductTitle(product.title || "");
+      setProductSummary(product.summary || "");
+      setProductPrice(product.price || "");
+      setProductStock(product.stock || 0); // Add this line
+      setProductBrand(product.brand?._id || "");
+      setProductCategory(product.category?._id || "");
+      setProductStore(product.store?._id || "");
+      
+      // Load existing thumbnail
+      if (product.thumbnail?.url) {
+        setThumbnailPreview(product.thumbnail.url);
+      }
+      
+      // Load existing gallery
+      if (product.gallery && product.gallery.length > 0) {
+        const galleryUrls = product.gallery.map(img => img.url);
+        setGalleryPreviews(galleryUrls);
+      }
+      
+      // Load existing features
+      if (product.features && product.features.length > 0) {
+        setFeatures(product.features);
+      }
+      
+      // LOAD TOGGLE STATES FROM DATABASE - FIXED
+      setEnableColors(product.enableColors === true || product.enableColors === 'true');
+      setEnableCustomSpecs(product.enableCustomSpecs === true || product.enableCustomSpecs === 'true');
+      setEnableSocialLinks(product.enableSocialLinks === true || product.enableSocialLinks === 'true');
+      setEnableStore(product.enableStore === true || product.enableStore === 'true');
+      
+      console.log('Loaded toggle states from DB:', {
+        enableColors: product.enableColors,
+        enableCustomSpecs: product.enableCustomSpecs,
+        enableSocialLinks: product.enableSocialLinks,
+        enableStore: product.enableStore,
+      });
+      
+      // COLORS: Load from the new colors array format
+      if (product.colors && Array.isArray(product.colors) && product.colors.length > 0) {
+        setSelectedColors(product.colors);
+        console.log('Loaded colors:', product.colors);
+      } else {
+        setSelectedColors([]);
+      }
+      
+      // CUSTOM ATTRIBUTES: Load from variations.customAttributes
+      if (product.variations?.customAttributes && Array.isArray(product.variations.customAttributes) && product.variations.customAttributes.length > 0) {
+        setCustomAttributes(product.variations.customAttributes);
+        console.log('Loaded custom attributes:', product.variations.customAttributes);
+      } else {
+        setCustomAttributes([{ name: "", value: "", unit: "" }]);
+      }
+      
+      // SOCIAL LINKS: Load from socialLinks array
+      if (product.socialLinks && Array.isArray(product.socialLinks) && product.socialLinks.length > 0) {
+        setSocialLinks(product.socialLinks);
+        console.log('Loaded social links:', product.socialLinks);
+      } else {
+        setSocialLinks([{ name: "", url: "" }]);
+      }
+      
+      // STORE: Load store assignment
+      if (product.store?._id) {
+        setProductStore(product.store._id);
+        console.log('Loaded store:', product.store);
+      } else {
+        setProductStore("");
+      }
+
+      // Load season and product status
+      setSelectedSeason(Array.isArray(product.season) ? product.season : [product.season || "all-season"]); // Handle both array and string
+      setSelectedProductStatus(Array.isArray(product.productStatus) ? product.productStatus : [product.productStatus || "regular"]); // Handle both array and string
+      setIsHidden(product.isHidden || false); // Load hidden status
+      
+      console.log('Full product data loaded:', product);
+      console.log('=== DEBUGGING SOCIAL LINKS ===');
+      console.log('enableSocialLinks state:', enableSocialLinks);
+      console.log('socialLinks state:', socialLinks);
+      console.log('product.socialLinks from DB:', product.socialLinks);
+      console.log('product.enableSocialLinks from DB:', product.enableSocialLinks);
+    }
+  }, [product]);
+
+  useEffect(() => {
+    if (isLoading) {
+      toast.loading("Updating Product...", { id: "updateProduct" });
+    }
+
+    if (data) {
+      toast.success(data?.description, { id: "updateProduct" });
+      setTimeout(() => {
+        router.push("/dashboard/admin/list-products");
+      }, 1000);
+    }
+
+    if (error?.data) {
+      toast.error(error?.data?.description, { id: "updateProduct" });
+    }
+  }, [isLoading, data, error, router]);
+
+  // Toggle handlers
+  useEffect(() => {
+    const setupToggle = (checkboxId, sectionId, resetFunction = null) => {
+      const checkbox = document.getElementById(checkboxId);
+      const section = document.getElementById(sectionId);
+      
+      const handleToggle = () => {
+        if (checkbox && section) {
+          if (checkbox.checked) {
+            section.classList.remove('hidden');
+          } else {
+            section.classList.add('hidden');
+            if (resetFunction) resetFunction();
+          }
+        }
+      };
+      
+      if (checkbox) {
+        checkbox.addEventListener('change', handleToggle);
+        return () => checkbox.removeEventListener('change', handleToggle);
+      }
+    };
+
+    const cleanupColors = setupToggle('enableColors', 'colorSection', () => setSelectedColors([]));
+    const cleanupSpecs = setupToggle('enableCustomSpecs', 'customSpecsSection', () => setCustomAttributes([{ name: "", value: "", unit: "" }]));
+    const cleanupLinks = setupToggle('enableSocialLinks', 'socialLinksSection', () => setSocialLinks([{ name: "", url: "" }]));
+    const cleanupStore = setupToggle('enableStore', 'storeSection');
+
+    return () => {
+      if (cleanupColors) cleanupColors();
+      if (cleanupSpecs) cleanupSpecs();
+      if (cleanupLinks) cleanupLinks();
+      if (cleanupStore) cleanupStore();
+    };
+  }, []);
+
+  const handleThumbnailPreview = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setThumbnail(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setThumbnailPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGalleryPreview = (e) => {
+    const files = Array.from(e.target.files);
+    
+    if (files.length === 0) return;
+    
+    const currentCount = galleryPreviews.length;
+    const newCount = currentCount + files.length;
+    
+    if (newCount > 5) {
+      toast.error(`You can only upload up to 5 images. You have ${currentCount} and tried to add ${files.length} more.`);
+      return;
+    }
+    
+    const validFiles = [];
+    
+    files.forEach((file) => {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error(`${file.name} is not a valid image file`);
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} is too large (max 5MB)`);
+        return;
+      }
+      
+      validFiles.push(file);
+    });
+    
+    if (validFiles.length === 0) return;
+    
+    const allFiles = [...gallery, ...validFiles];
+    setGallery(allFiles);
+    
+    let loadedCount = 0;
+    const newPreviews = [...galleryPreviews];
+    
+    validFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newPreviews.push(reader.result);
+        loadedCount++;
+        
+        if (loadedCount === validFiles.length) {
+          setGalleryPreviews(newPreviews);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    e.target.value = '';
+  };
+
+  // Feature handlers
+  const handleAddFeature = () => {
+    setFeatures([...features, { title: "", content: [""] }]);
+  };
+
+  const handleRemoveFeature = (index) => {
+    const updatedFeatures = [...features];
+    updatedFeatures.splice(index, 1);
+    setFeatures(updatedFeatures);
+  };
+
+  const handleFeatureTitleChange = (index, value) => {
+    const updatedFeatures = [...features];
+    updatedFeatures[index].title = value;
+    setFeatures(updatedFeatures);
+  };
+
+  const handleAddContent = (featureIndex) => {
+    const updatedFeatures = features.map((feature, index) => {
+      if (index === featureIndex) {
+        return {
+          ...feature,
+          content: [...feature.content, ""] // Create a new array with the new empty string
+        };
+      }
+      return { ...feature }; // Deep copy other features too
+    });
+    setFeatures(updatedFeatures);
+  };
+
+  const handleRemoveContent = (featureIndex, contentIndex) => {
+    const updatedFeatures = [...features];
+    updatedFeatures[featureIndex].content.splice(contentIndex, 1);
+    setFeatures(updatedFeatures);
+  };
+
+  const handleContentChange = (featureIndex, contentIndex, value) => {
+    const updatedFeatures = [...features];
+    updatedFeatures[featureIndex].content[contentIndex] = value;
+    setFeatures(updatedFeatures);
+  };
+
+  const handleColorToggle = (color) => {
+    setSelectedColors(prev => 
+      prev.includes(color.name) 
+        ? prev.filter(c => c !== color.name)
+        : [...prev, color.name]
+    );
+  };
+
+  // Custom attribute handlers
+  const handleAddCustomAttribute = () => {
+    setCustomAttributes([...customAttributes, { name: "", value: "", unit: "" }]);
+  };
+
+  const handleRemoveCustomAttribute = (index) => {
+    const updated = [...customAttributes];
+    updated.splice(index, 1);
+    setCustomAttributes(updated);
+  };
+
+  const handleCustomAttributeChange = (index, field, value) => {
+    const updated = [...customAttributes];
+    updated[index][field] = value;
+    setCustomAttributes(updated);
+  };
+
+  // Social link handlers
+  const handleAddSocialLink = () => {
+    setSocialLinks([...socialLinks, { name: "", url: "" }]);
+  };
+
+  const handleRemoveSocialLink = (index) => {
+    const updated = [...socialLinks];
+    updated.splice(index, 1);
+    setSocialLinks(updated);
+  };
+
+  const handleSocialLinkChange = (index, field, value) => {
+    const updated = [...socialLinks];
+    updated[index][field] = value;
+    setSocialLinks(updated);
+  };
+
+  async function handleUpdateProduct(event) {
+    event.preventDefault();
+    
+    console.log('=== FRONTEND UPDATE DEBUG ===');
+    console.log('Toggle states BEFORE sending:', {
+      enableColors,
+      enableCustomSpecs,
+      enableSocialLinks,
+      enableStore
+    });
+
+    const formData = new FormData();
+
+    formData.append("title", productTitle);
+    formData.append("summary", productSummary);
+    formData.append("price", productPrice);
+    formData.append("stock", productStock); // Add this line
+
+    if (thumbnail) {
+      formData.append("thumbnail", thumbnail);
+    }
+    
+    for (let i = 0; i < gallery.length; i++) {
+      formData.append("gallery", gallery[i]);
+    }
+
+    const validFeatures = features.filter(feature => 
+      feature.title.trim() !== "" && 
+      feature.content.some(content => content.trim() !== "")
+    ).map(feature => ({
+      ...feature,
+      content: feature.content.filter(content => content.trim() !== "")
+    }));
+    
+    formData.append("features", JSON.stringify(validFeatures));
+    
+    const validVariations = {
+      colors: enableColors ? selectedColors || [] : [],  // Only send colors if enabled
+      customAttributes: enableCustomSpecs ? customAttributes.filter(attr => attr.name && attr.value) || [] : [],  // Only send custom attributes if enabled
+    };
+    
+    formData.append("variations", JSON.stringify(validVariations));
+
+    const validSocialLinks = enableSocialLinks ? socialLinks.filter(link => link.name && link.url) || [] : [];  // Only send social links if enabled
+    formData.append("socialLinks", JSON.stringify(validSocialLinks));
+
+    formData.append("brand", productBrand);
+    formData.append("category", productCategory);
+    
+    if (enableStore && productStore) {  // Only send store if enabled and selected
+      formData.append("store", productStore);
+    }
+
+    formData.append("season", JSON.stringify(selectedSeason)); // Send as JSON array
+    formData.append("productStatus", JSON.stringify(selectedProductStatus));
+    formData.append("isHidden", isHidden ? 'true' : 'false');
+
+    // IMPORTANT: Send toggle states - make sure they're the actual boolean values
+    formData.append("enableColors", enableColors ? 'true' : 'false');
+    formData.append("enableCustomSpecs", enableCustomSpecs ? 'true' : 'false');
+    formData.append("enableSocialLinks", enableSocialLinks ? 'true' : 'false');
+    formData.append("enableStore", enableStore ? 'true' : 'false');
+
+    console.log('Toggle states AFTER converting to strings:', {
+      enableColors: enableColors ? 'true' : 'false',
+      enableCustomSpecs: enableCustomSpecs ? 'true' : 'false',
+      enableSocialLinks: enableSocialLinks ? 'true' : 'false',
+      enableStore: enableStore ? 'true' : 'false'
+    });
+
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+
+    updateProduct({ id: productId, data: formData });
+  }
+
+  // Color grid component
+  const colorGrid = useMemo(() => {
+    if (filteredColors.length === 0) {
+      return (
+        <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+          <p className="text-gray-500 mt-2">No colors found for "{colorSearch}"</p>
+          <button
+            type="button"
+            onClick={() => setColorSearch("")}
+            className="mt-2 text-blue-500 hover:text-blue-700 text-sm"
+          >
+            Clear search
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 max-h-80 overflow-y-auto border rounded-lg p-3">
+        {filteredColors.map((color, index) => (
+          <div
+            key={`${color.name}-${index}`}
+            onClick={() => handleColorToggle(color)}
+            className={`
+              flex flex-col items-center p-2 rounded-lg cursor-pointer border-2 transition-all
+              ${selectedColors.includes(color.name) 
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-gray-200 hover:border-gray-300'
+              }
+            `}
+          >
+            <div
+              className="w-8 h-8 rounded-full border-2 border-gray-300 shadow-sm"
+              style={{ backgroundColor: `#${color.hex}` }}
+            />
+            <span className="text-xs mt-1 text-center line-clamp-1" title={color.name}>
+              {color.name}
+            </span>
+            {selectedColors.includes(color.name) && (
+              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }, [filteredColors, selectedColors, colorSearch]);
+
+  if (fetchingProduct) {
+    return (
+      <Dashboard>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Loading product...</div>
+        </div>
+      </Dashboard>
+    );
+  }
+
+  return (
+    <form className="w-full flex flex-col gap-y-4" onSubmit={handleUpdateProduct}>
+      {/* Basic Info */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <h3 className="text-lg font-semibold">Basic Information</h3>
+        
+        <label htmlFor="productTitle" className="w-full flex flex-col gap-y-1">
+          <span className="text-sm">Product Title*</span>
+          <input
+            type="text"
+            name="productTitle"
+            id="productTitle"
+            value={productTitle}
+            onChange={(e) => setProductTitle(e.target.value)}
+            placeholder="i.e. iPhone 15 Pro"
+            required
+          />
+        </label>
+
+        <label htmlFor="summary" className="w-full flex flex-col gap-y-1">
+          <span className="text-sm">Product Summary*</span>
+          <textarea
+            name="summary"
+            id="summary"
+            rows="3"
+            value={productSummary}
+            onChange={(e) => setProductSummary(e.target.value)}
+            placeholder="Brief description of the product..."
+            required
+          ></textarea>
+        </label>
+
+        <label htmlFor="price" className="w-full flex flex-col gap-y-1">
+          <span className="text-sm">Price (USD)*</span>
+          <input
+            type="number"
+            name="price"
+            id="price"
+            value={productPrice}
+            onChange={(e) => setProductPrice(e.target.value)}
+            placeholder="i.e. 999"
+            min="0"
+            step="0.01"
+            required
+          />
+        </label>
+
+        {/* Stock Field - NEW */}
+        <label htmlFor="stock" className="w-full flex flex-col gap-y-1">
+          <span className="text-sm">Stock Quantity*</span>
+          <input
+            type="number"
+            name="stock"
+            id="stock"
+            value={productStock}
+            onChange={(e) => setProductStock(Number(e.target.value))}
+            placeholder="i.e. 100"
+            min="0"
+            required
+            className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <span className="text-xs text-gray-600">
+            Current stock: {productStock}. Set to 0 to mark as out of stock.
+          </span>
+        </label>
+      </div>
+
+      {/* Images */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <h3 className="text-lg font-semibold">Product Images</h3>
+        
+        {/* Thumbnail */}
+        <div className="w-fit flex flex-col gap-y-4">
+          <h4 className="text-md font-medium">Main Product Image</h4>
+          
+          {thumbnailPreview ? (
+            <div className="relative w-fit">
+              <Image
+                src={thumbnailPreview}
+                alt="Product image preview"
+                width={150}
+                height={150}
+                className="w-40 h-40 object-cover rounded-lg border"
+                priority={true}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setThumbnailPreview(null);
+                  setThumbnail(null);
+                  const fileInput = document.getElementById('thumbnail');
+                  if (fileInput) fileInput.value = '';
+                }}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg hover:bg-red-600 shadow-lg"
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <label htmlFor="thumbnail" className="w-full flex flex-col gap-y-1 relative cursor-pointer">
+              <span className="text-sm font-medium">Main Image*</span>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors w-40 h-40 flex flex-col items-center justify-center">
+                <svg className="h-12 w-12 text-gray-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-sm text-gray-600 text-center">Click to upload</span>
+                <p className="text-xs text-gray-500 text-center">PNG, JPG, JPEG</p>
+              </div>
+              <input
+                type="file"
+                name="thumbnail"
+                id="thumbnail"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                accept=".jpg, .jpeg, .png"
+                onChange={handleThumbnailPreview}
+              />
+            </label>
+          )}
+        </div>
+
+        {/* Gallery */}
+        <div className="w-full flex flex-col gap-y-4">
+          <h4 className="text-md font-medium">Additional Images (Optional - Max 5)</h4>
+          
+          {galleryPreviews.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {galleryPreviews.map((preview, index) => (
+                <div key={index} className="relative w-24 h-24">
+                  <Image
+                    src={preview}
+                    alt={`gallery-${index}`}
+                    width={96}
+                    height={96}
+                    className="w-full h-full object-cover rounded-lg border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newPreviews = galleryPreviews.filter((_, i) => i !== index);
+                      const newFiles = Array.from(gallery).filter((_, i) => i !== index);
+                      setGalleryPreviews(newPreviews);
+                      setGallery(newFiles);
+                    }}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 shadow-lg"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {galleryPreviews.length < 5 && (
+            <label htmlFor="gallery" className="w-full flex flex-col gap-y-1 relative cursor-pointer">
+              <span className="text-sm">
+                Add More Images ({galleryPreviews.length}/5)
+              </span>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <svg className="mx-auto h-10 w-10 text-gray-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <div className="text-sm text-gray-600">
+                  Click to select multiple images
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  PNG, JPG, JPEG • Select multiple files at once
+                </p>
+              </div>
+              <input
+                type="file"
+                name="gallery"
+                id="gallery"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                accept=".jpg, .jpeg, .png"
+                multiple
+                onChange={handleGalleryPreview}
+              />
+            </label>
+          )}
+
+          {galleryPreviews.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setGalleryPreviews([]);
+                setGallery([]);
+                const galleryInput = document.getElementById('gallery');
+                if (galleryInput) galleryInput.value = '';
+              }}
+              className="w-fit px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
+            >
+              Clear All Images ({galleryPreviews.length})
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Classification */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <h3 className="text-lg font-semibold">Classification</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label htmlFor="category" className="w-full flex flex-col gap-y-1">
+            <span className="text-sm">Category*</span>
+            <select 
+              name="category" 
+              id="category" 
+              value={productCategory}
+              onChange={(e) => setProductCategory(e.target.value)}
+              required
+            >
+              <option value="">Select Category</option>
+              {categories.map((category) => (
+                <option key={category._id} value={category._id}>
+                  {category.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label htmlFor="brand" className="w-full flex flex-col gap-y-1">
+            <span className="text-sm">Brand*</span>
+            <select 
+              name="brand" 
+              id="brand" 
+              value={productBrand}
+              onChange={(e) => setProductBrand(e.target.value)}
+              required
+            >
+              <option value="">Select Brand</option>
+              {brands.map((brand) => (
+                <option key={brand._id} value={brand._id}>
+                  {brand.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {/* Optional Store */}
+  
+      </div>
+
+      {/* Colors Section - COMPLETELY FIXED */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Product Colors (Optional)</h3>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="enableColors"
+              checked={enableColors}
+              onChange={(e) => {
+                console.log('Colors checkbox changed:', e.target.checked);
+                setEnableColors(e.target.checked);
+                if (!e.target.checked) {
+                  setSelectedColors([]);
+                }
+              }}
+              className="rounded"
+            />
+            <label htmlFor="enableColors" className="text-sm font-medium cursor-pointer">
+              Enable Color Variations
+            </label>
+          </div>
+        </div>
+
+        {enableColors && (
+          <div className="space-y-4">
+            {/* Color Search */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search colors..."
+                value={colorSearch}
+                onChange={(e) => setColorSearch(e.target.value)}
+                className="w-full pl-4 pr-10 py-2 border rounded-lg"
+              />
+            </div>
+
+            {/* Selected Colors */}
+            {selectedColors.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-medium">Selected Colors:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedColors.map((color, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center space-x-2 bg-gray-100 rounded-lg px-3 py-1"
+                    >
+                      <div
+                        className="w-4 h-4 rounded-full border"
+                        style={{ backgroundColor: `#${color.hex}` }}
+                      ></div>
+                      <span className="text-sm">{color.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedColors(prev => prev.filter((_, i) => i !== index))}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Available Colors */}
+            <div className="grid grid-cols-8 md:grid-cols-12 lg:grid-cols-16 gap-2 max-h-48 overflow-y-auto">
+              {filteredColors.map((color, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={`w-8 h-8 rounded-full border-2 hover:scale-110 transition-transform ${
+                    selectedColors.some(c => c.name === color.name)
+                      ? 'border-blue-500 shadow-lg'
+                      : 'border-gray-300'
+                  }`}
+                  style={{ backgroundColor: `#${color.hex}` }}
+                  onClick={() => {
+                    if (selectedColors.some(c => c.name === color.name)) {
+                      setSelectedColors(prev => prev.filter(c => c.name !== color.name));
+                    } else {
+                      setSelectedColors(prev => [...prev, color]);
+                    }
+                  }}
+                  title={color.name}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Custom Specifications Section - COMPLETELY FIXED */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Custom Specifications (Optional)</h3>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="enableCustomSpecs"
+              checked={enableCustomSpecs}
+              onChange={(e) => {
+                console.log('Custom specs checkbox changed:', e.target.checked);
+                setEnableCustomSpecs(e.target.checked);
+                if (!e.target.checked) {
+                  setCustomAttributes([{ name: "", value: "", unit: "" }]);
+                }
+              }}
+              className="rounded"
+            />
+            <label htmlFor="enableCustomSpecs" className="text-sm font-medium cursor-pointer">
+              Add Custom Specifications
+            </label>
+          </div>
+        </div>
+
+        {enableCustomSpecs && (
+          <div className="space-y-4">
+            {customAttributes.map((attr, index) => (
+              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg">
+                <input
+                  type="text"
+                  placeholder="Specification name (e.g., Weight, Width)"
+                  value={attr.name}
+                  onChange={(e) => {
+                    const newAttrs = [...customAttributes];
+                    newAttrs[index].name = e.target.value;
+                    setCustomAttributes(newAttrs);
+                  }}
+                  className="w-full"
+                />
+                <input
+                  type="text"
+                  placeholder="Value (e.g., 2.5, 15)"
+                  value={attr.value}
+                  onChange={(e) => {
+                    const newAttrs = [...customAttributes];
+                    newAttrs[index].value = e.target.value;
+                    setCustomAttributes(newAttrs);
+                  }}
+                  className="w-full"
+                />
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    placeholder="Unit (e.g., kg, cm)"
+                    value={attr.unit}
+                    onChange={(e) => {
+                      const newAttrs = [...customAttributes];
+                      newAttrs[index].unit = e.target.value;
+                      setCustomAttributes(newAttrs);
+                    }}
+                    className="flex-1"
+                  />
+                  {customAttributes.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setCustomAttributes(prev => prev.filter((_, i) => i !== index))}
+                      className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            <button
+              type="button"
+              onClick={() => setCustomAttributes(prev => [...prev, { name: "", value: "", unit: "" }])}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Add Specification
+            </button>
+          </div>
+        )}
+      </div>
+
+     {/* Social Links Section - COMPLETELY FIXED */}
+<div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+  <div className="flex items-center justify-between">
+    <h3 className="text-lg font-semibold">Social Links (Optional)</h3>
+    <div className="flex items-center space-x-2">
+      <input
+        type="checkbox"
+        id="enableSocialLinks"
+        checked={enableSocialLinks}  // ← This should be 'checked', not 'defaultChecked'
+        onChange={(e) => {
+          console.log('Social links checkbox changed:', e.target.checked);
+          setEnableSocialLinks(e.target.checked);
+          if (!e.target.checked) {
+            setSocialLinks([{ name: "", url: "" }]);
+          }
+        }}
+        className="rounded"
+      />
+            <label htmlFor="enableSocialLinks" className="text-sm font-medium cursor-pointer">
+              Add Social Links & References
+            </label>
+          </div>
+        </div>
+
+        {enableSocialLinks && (
+          <div className="space-y-4">
+            {socialLinks.map((link, index) => (
+              <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+                <input
+                  type="text"
+                  placeholder="Platform name (e.g., TikTok, Instagram)"
+                  value={link.name}
+                  onChange={(e) => {
+                    const newLinks = [...socialLinks];
+                    newLinks[index].name = e.target.value;
+                    setSocialLinks(newLinks);
+                  }}
+                  className="w-full"
+                />
+                <div className="flex space-x-2">
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={link.url}
+                    onChange={(e) => {
+                      const newLinks = [...socialLinks];
+                      newLinks[index].url = e.target.value;
+                      setSocialLinks(newLinks);
+                    }}
+                    className="flex-1"
+                  />
+                  {socialLinks.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setSocialLinks(prev => prev.filter((_, i) => i !== index))}
+                      className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            <button
+              type="button"
+              onClick={() => setSocialLinks(prev => [...prev, { name: "", url: "" }])}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Add Social Link
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Store Selection Section - COMPLETELY FIXED */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Store Assignment (Optional)</h3>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="enableStore"
+              checked={enableStore}
+              onChange={(e) => {
+                console.log('Store checkbox changed:', e.target.checked);
+                setEnableStore(e.target.checked);
+                if (!e.target.checked) {
+                  setProductStore("");
+                }
+              }}
+              className="rounded"
+            />
+            <label htmlFor="enableStore" className="text-sm font-medium cursor-pointer">
+              Associate with Store
+            </label>
+          </div>
+        </div>
+
+        {enableStore && (
+          <select
+            value={productStore}
+            onChange={(e) => setProductStore(e.target.value)}
+            className="w-full p-2 border rounded-lg"
+          >
+            <option value="">Select a store...</option>
+            {stores.map((store) => (
+              <option key={store._id} value={store._id}>
+                {store.title}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Features */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <div className="w-full flex flex-row justify-between items-center">
+          <h3 className="text-lg font-semibold">Product Features</h3>
+          <button
+            type="button"
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            onClick={handleAddFeature}
+          >
+            Add Feature
+          </button>
+        </div>
+
+        {features.map((feature, featureIndex) => (
+          <div key={featureIndex} className="border p-4 rounded">
+            <div className="flex justify-between items-center mb-2">
+              <input
+                type="text"
+                value={feature.title}
+                onChange={(e) => handleFeatureTitleChange(featureIndex, e.target.value)}
+                placeholder="Feature title (e.g., Specifications)"
+                className="flex-1 mr-2"
+              />
+              {features.length > 1 && (
+                <button
+                  type="button"
+                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  onClick={() => handleRemoveFeature(featureIndex)}
+                >
+                  Remove Feature
+                </button>
+              )}
+            </div>
+
+            {feature.content.map((content, contentIndex) => (
+              <div key={contentIndex} className="flex gap-x-2 items-center mb-2">
+                <input
+                  type="text"
+                  value={content}
+                  onChange={(e) => handleContentChange(featureIndex, contentIndex, e.target.value)}
+                  placeholder="Feature content"
+                  className="flex-1"
+                />
+                {feature.content.length > 1 && (
+                  <button
+                    type="button"
+                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    onClick={() => handleRemoveContent(featureIndex, contentIndex)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+
+            <button
+              type="button"
+              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={() => handleAddContent(featureIndex)}
+            >
+              Add Content
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Season Selection - Multiple Selection */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <h3 className="text-lg font-semibold">Season Selection (Multiple Selection)</h3>
+        <p className="text-sm text-gray-600">Select one or more seasons for this product</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { value: "all-season", label: "All Season", icon: "🌍" },
+            { value: "spring", label: "Spring", icon: "🌸" },
+            { value: "summer", label: "Summer", icon: "☀️" },
+            { value: "autumn", label: "Autumn", icon: "🍂" },
+            { value: "winter", label: "Winter", icon: "❄️" },
+          ].map((season) => (
+            <label 
+              key={season.value}
+              className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
+            >
+              <input
+                type="checkbox"
+                checked={selectedSeason.includes(season.value)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedSeason(prev => [...prev, season.value]);
+                  } else {
+                    setSelectedSeason(prev => prev.filter(s => s !== season.value));
+                  }
+                }}
+                className="rounded text-blue-500 focus:ring-blue-500"
+              />
+              <div className="flex items-center space-x-2 flex-1">
+                <span className="text-xl">{season.icon}</span>
+                <div>
+                  <div className="font-semibold text-gray-900">{season.label}</div>
+                  <div className="text-sm text-gray-600">
+                    {season.value === "all-season" ? "Available all year round" : `Perfect for ${season.label.toLowerCase()}`}
+                  </div>
+                </div>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Product Status Section - FIXED */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <h3 className="text-lg font-semibold">Product Status (Multiple Selection)</h3>
+        <p className="text-sm text-gray-600">Select one or more statuses for this product</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Regular */}
+          <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <input
+              type="checkbox"
+              checked={selectedProductStatus.includes("regular")}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedProductStatus(prev => [...prev, "regular"]);
+                } else {
+                  setSelectedProductStatus(prev => prev.filter(status => status !== "regular"));
+                }
+              }}
+              className="rounded text-gray-500 focus:ring-gray-500"
+            />
+            <div className="flex-1">
+              <div className="font-semibold text-gray-900">Regular Product</div>
+              <div className="text-sm text-gray-600">Standard product listing</div>
+            </div>
+          </label>
+
+          {/* Featured */}
+          <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-blue-50">
+            <input
+              type="checkbox"
+              checked={selectedProductStatus.includes("featured")}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedProductStatus(prev => [...prev, "featured"]);
+                } else {
+                  setSelectedProductStatus(prev => prev.filter(status => status !== "featured"));
+                }
+              }}
+              className="rounded text-blue-500 focus:ring-blue-500"
+            />
+            <div className="flex-1">
+              <div className="font-semibold text-gray-900">Featured Product</div>
+              <div className="text-sm text-gray-600">Highlighted in featured section</div>
+            </div>
+          </label>
+
+          {/* Trending */}
+          <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-green-50">
+            <input
+              type="checkbox"
+              checked={selectedProductStatus.includes("trending")}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedProductStatus(prev => [...prev, "trending"]);
+                } else {
+                  setSelectedProductStatus(prev => prev.filter(status => status !== "trending"));
+                }
+              }}
+              className="rounded text-green-500 focus:ring-green-500"
+            />
+            <div className="flex-1">
+              <div className="font-semibold text-gray-900">Trending Product</div>
+              <div className="text-sm text-gray-600">Popular and trending item</div>
+            </div>
+          </label>
+
+          {/* Best Seller */}
+          <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-red-50">
+            <input
+              type="checkbox"
+              checked={selectedProductStatus.includes("best-seller")}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedProductStatus(prev => [...prev, "best-seller"]);
+                } else {
+                  setSelectedProductStatus(prev => prev.filter(status => status !== "best-seller"));
+                }
+              }}
+              className="rounded text-red-500 focus:ring-red-500"
+            />
+            <div className="flex-1">
+              <div className="font-semibold text-gray-900">Best Seller</div>
+              <div className="text-sm text-gray-600">Top performing product</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* Hide Product Section - IMPROVED */}
+      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
+        <h3 className="text-lg font-semibold">Product Visibility</h3>
+        <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-yellow-50">
+          <input
+            type="checkbox"
+            checked={isHidden}
+            onChange={(e) => setIsHidden(e.target.checked)}
+            className="rounded text-yellow-500 focus:ring-yellow-500"
+          />
+          <div className="flex-1">
+            <div className="font-semibold text-gray-900">Hide Product</div>
+            <div className="text-sm text-gray-600">
+              {isHidden 
+                ? "🔒 This product will be hidden from customers but saved in the system" 
+                : "👁️ This product will be visible to customers"
+              }
+            </div>
+          </div>
+        </label>
+      </div>
+
+
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full py-3 bg-black text-white rounded hover:bg-gray-800 disabled:bg-gray-400 transition-colors"
+      >
+        {isLoading ? "Updating Product..." : "Update Product"}
+      </button>
+    </form>
+  );
+}
+
+export default Page;
