@@ -24,11 +24,29 @@ const error = require("./middleware/error.middleware");
 /* application level connection */
 const app = express();
 
+/* CORS configuration - allow multiple origins */
+const allowedOrigins = [
+  process.env.ORIGIN_URL, // Production frontend
+  'http://localhost:3000', // Local development
+  'http://localhost:3001', // Alternative local port
+  
+];
+
 /* middleware connections */
 app.use(
   cors({
-    origin: process.env.ORIGIN_URL,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: "GET, PATCH, POST, DELETE",
+    credentials: true, // Allow cookies/auth headers
     preflightContinue: false,
     optionsSuccessStatus: 204,
   })
