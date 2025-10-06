@@ -1,11 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  output: 'standalone', // Add this for Vercel deployment
+  // Remove or comment out standalone for now
+  // output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -22,6 +21,8 @@ const nextConfig = {
       },
     ],
   },
+  // Add this instead
+  distDir: '.next',
 };
 
 module.exports = nextConfig;
