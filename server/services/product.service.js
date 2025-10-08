@@ -24,8 +24,18 @@ const User = require("../models/user.model");
 
 /* add product information */
 exports.addProduct = async (req, res) => {
-  const { features, variations, socialLinks, season, productStatus, isHidden, enableColors, enableCustomSpecs, enableSocialLinks, enableStore, ...otherInformation } = req.body;
-  const { thumbnail, gallery } = req.files || {};
+  const { 
+    features, variations, socialLinks, season, productStatus, isHidden, 
+    enableColors, enableCustomSpecs, enableSocialLinks, enableStore,
+    colorImageNames, // 🆕 Track which colors have images
+    ...otherInformation 
+  } = req.body;
+  const { thumbnail, gallery, colorImages } = req.files || {};
+
+  console.log('📝 Adding product with color images:', {
+    colorImageNames: colorImageNames,
+    colorImagesCount: colorImages?.length || 0
+  });
 
   const productInformation = {
     ...otherInformation,
@@ -40,9 +50,9 @@ exports.addProduct = async (req, res) => {
     features: JSON.parse(features || "[]"),
     variations: JSON.parse(variations || "{}"),
     socialLinks: socialLinks ? JSON.parse(socialLinks) : [],
-    season: season ? JSON.parse(season) : ["all-season"], // Parse as array
-    productStatus: productStatus ? JSON.parse(productStatus) : ["regular"], // Parse as array
-    isHidden: isHidden === 'true', // Convert string to boolean
+    season: season ? JSON.parse(season) : ["all-season"],
+    productStatus: productStatus ? JSON.parse(productStatus) : ["regular"],
+    isHidden: isHidden === 'true',
     
     // Save toggle states
     enableColors: enableColors === 'true',
@@ -51,8 +61,36 @@ exports.addProduct = async (req, res) => {
     enableStore: enableStore === 'true',
   };
 
-  // Extract colors from variations and save as separate field
+  // 🆕 Attach images to colors
   if (productInformation.variations.colors && Array.isArray(productInformation.variations.colors)) {
+    const colorNamesArray = Array.isArray(colorImageNames) ? colorImageNames : (colorImageNames ? [colorImageNames] : []);
+    const colorImagesArray = colorImages || [];
+
+    console.log('🎨 Processing color images:', {
+      colorNames: colorNamesArray,
+      imagesCount: colorImagesArray.length
+    });
+
+    productInformation.variations.colors = productInformation.variations.colors.map(color => {
+      // Find the index of this color in colorImageNames
+      const imageIndex = colorNamesArray.findIndex(name => name === color.name);
+      
+      if (imageIndex !== -1 && colorImagesArray[imageIndex]) {
+        const imageFile = colorImagesArray[imageIndex];
+        console.log(`✅ Attaching image to color: ${color.name}`);
+        return {
+          ...color,
+          image: {
+            url: imageFile.path,
+            public_id: imageFile.filename,
+          }
+        };
+      }
+      
+      return color;
+    });
+
+    // Save colors to top-level field
     productInformation.colors = productInformation.variations.colors;
   }
 
@@ -69,7 +107,7 @@ exports.addProduct = async (req, res) => {
   res.status(201).json({
     acknowledgement: true,
     message: "Created",
-    description: "Product created successfully",
+    description: "Product created successfully with color images",
   });
 };
 
@@ -170,119 +208,171 @@ exports.getFilteredProducts = async (req, res) => {
 
 /* update product information */
 exports.updateProduct = async (req, res) => {
-  try {
-    console.log('=== UPDATE PRODUCT START ===');
-    console.log('Request body:', req.body);
-    
-    const { features, variations, socialLinks, season, productStatus, isHidden, enableColors, enableCustomSpecs, enableSocialLinks, enableStore, ...otherInformation } = req.body;
-
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({
-        acknowledgement: false,
-        message: "Not Found",
-        description: "Product not found",
-      });
-    }
-
-    const updateData = { ...otherInformation };
-
-    // Handle thumbnail update
-    if (!req.body.thumbnail && req.files && req.files.thumbnail?.length > 0) {
-      console.log('Updating thumbnail...');
-      remove(product.thumbnail.public_id);
-
-      updateData.thumbnail = {
-        url: req.files.thumbnail[0].path,
-        public_id: req.files.thumbnail[0].filename,
-      };
-    }
-
-    // Handle gallery update
-    if (
-      !req.body.gallery?.length > 0 &&
-      req.files &&
-      req.files.gallery?.length > 0
-    ) {
-      console.log('Updating gallery...');
-      for (let i = 0; i < product.gallery.length; i++) {
-        await remove(product.gallery[i].public_id);
-      }
-
-      updateData.gallery = req.files.gallery.map((file) => ({
-        url: file.path,
-        public_id: file.filename,
-      }));
-    }
-
-    // Handle JSON parsing safely
-    updateData.features = JSON.parse(features || "[]");
-    
-    // Parse variations and extract colors
-    const parsedVariations = JSON.parse(variations || "{}");
-    updateData.variations = parsedVariations;
-    
-    // IMPORTANT: Extract colors from variations and set as separate field
-    if (parsedVariations.colors && Array.isArray(parsedVariations.colors)) {
-      updateData.colors = parsedVariations.colors;
-    } else {
-      updateData.colors = [];
-    }
-    
-    updateData.socialLinks = socialLinks ? JSON.parse(socialLinks) : [];
-    
-    // Handle new fields
-    updateData.season = season ? JSON.parse(season) : ["all-season"]; // Parse as array
-    updateData.productStatus = productStatus ? JSON.parse(productStatus) : ["regular"]; // Parse as array
-    updateData.isHidden = isHidden === 'true'; // Convert string to boolean
-
-    // Save toggle states
-    updateData.enableColors = enableColors === 'true';
-    updateData.enableCustomSpecs = enableCustomSpecs === 'true';
-    updateData.enableSocialLinks = enableSocialLinks === 'true';
-    updateData.enableStore = enableStore === 'true';
-
-    console.log('Saving toggle states:', {
-      enableColors: updateData.enableColors,
-      enableCustomSpecs: updateData.enableCustomSpecs,
-      enableSocialLinks: updateData.enableSocialLinks,
-      enableStore: updateData.enableStore,
-    });
-
-    console.log('Final updateData being sent to MongoDB:', JSON.stringify(updateData, null, 2));
-
-    const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      { $set: updateData },
-      { runValidators: true, new: true }
-    );
-
-    console.log('Product after update:', JSON.stringify(updatedProduct, null, 2));
-
-    // Update store if provided
-    if (req.body.store) {
-      console.log('Updating store with product...');
-      await Store.findByIdAndUpdate(req.body.store, {
-        $push: { products: updatedProduct._id },
-      });
-    }
-
-    res.status(200).json({
-      acknowledgement: true,
-      message: "Ok",
-      description: "Product updated successfully",
-      data: updatedProduct,
-    });
-    
-    console.log('=== UPDATE PRODUCT COMPLETE ===');
-  } catch (error) {
-    console.error('Error updating product:', error);
-    res.status(500).json({
+  const { 
+    features, variations, socialLinks, season, productStatus, isHidden,
+    enableColors, enableCustomSpecs, enableSocialLinks, enableStore,
+    colorImageNames, // 🆕
+    ...otherInformation 
+  } = req.body;
+  const { thumbnail, gallery, colorImages } = req.files || {};
+  
+  console.log('=== UPDATE PRODUCT START ===');
+  console.log('Request body:', req.body);
+  
+  const product = await Product.findById(req.params.id);
+  if (!product) {
+    return res.status(404).json({
       acknowledgement: false,
-      message: "Internal Server Error",
-      description: error.message,
+      message: "Not Found",
+      description: "Product not found",
     });
   }
+
+  const updateData = { ...otherInformation };
+
+  // Handle thumbnail update
+  if (!req.body.thumbnail && req.files && req.files.thumbnail?.length > 0) {
+    console.log('Updating thumbnail...');
+    remove(product.thumbnail.public_id);
+
+    updateData.thumbnail = {
+      url: req.files.thumbnail[0].path,
+      public_id: req.files.thumbnail[0].filename,
+    };
+  }
+
+  // Handle gallery update
+  if (
+    !req.body.gallery?.length > 0 &&
+    req.files &&
+    req.files.gallery?.length > 0
+  ) {
+    console.log('Updating gallery...');
+    for (let i = 0; i < product.gallery.length; i++) {
+      await remove(product.gallery[i].public_id);
+    }
+
+    updateData.gallery = req.files.gallery.map((file) => ({
+      url: file.path,
+      public_id: file.filename,
+    }));
+  }
+
+  // Handle JSON parsing safely
+  updateData.features = JSON.parse(features || "[]");
+  
+  // Parse variations and extract colors
+  const parsedVariations = JSON.parse(variations || "{}");
+  updateData.variations = parsedVariations;
+  
+  // IMPORTANT: Extract colors from variations and set as separate field
+  if (parsedVariations.colors && Array.isArray(parsedVariations.colors)) {
+    updateData.colors = parsedVariations.colors;
+  } else {
+    updateData.colors = [];
+  }
+  
+  updateData.socialLinks = socialLinks ? JSON.parse(socialLinks) : [];
+  
+  // Handle new fields
+  updateData.season = season ? JSON.parse(season) : ["all-season"]; // Parse as array
+  updateData.productStatus = productStatus ? JSON.parse(productStatus) : ["regular"]; // Parse as array
+  updateData.isHidden = isHidden === 'true'; // Convert string to boolean
+
+  // Save toggle states
+  updateData.enableColors = enableColors === 'true';
+  updateData.enableCustomSpecs = enableCustomSpecs === 'true';
+  updateData.enableSocialLinks = enableSocialLinks === 'true';
+  updateData.enableStore = enableStore === 'true';
+
+  console.log('Saving toggle states:', {
+    enableColors: updateData.enableColors,
+    enableCustomSpecs: updateData.enableCustomSpecs,
+    enableSocialLinks: updateData.enableSocialLinks,
+    enableStore: updateData.enableStore,
+  });
+
+  console.log('Final updateData being sent to MongoDB:', JSON.stringify(updateData, null, 2));
+
+  // 🆕 Handle color images
+  if (updateData.variations.colors && Array.isArray(updateData.variations.colors)) {
+    const colorNamesArray = Array.isArray(colorImageNames) ? colorImageNames : (colorImageNames ? [colorImageNames] : []);
+    const colorImagesArray = colorImages || [];
+
+    console.log('🎨 Processing color images for update:', {
+      colorNames: colorNamesArray,
+      imagesCount: colorImagesArray.length
+    });
+
+    // First, collect all old images that need to be deleted
+    const imagesToDelete = [];
+    
+    updateData.variations.colors = updateData.variations.colors.map(color => {
+      const imageIndex = colorNamesArray.findIndex(name => name === color.name);
+      
+      if (imageIndex !== -1 && colorImagesArray[imageIndex]) {
+        const imageFile = colorImagesArray[imageIndex];
+        
+        // Check if the OLD product has an image for this color that needs deletion
+        const oldColor = product.variations.colors?.find(c => c.name === color.name);
+        if (oldColor?.image?.public_id) {
+          imagesToDelete.push(oldColor.image.public_id);
+        }
+        
+        return {
+          ...color,
+          image: {
+            url: imageFile.path,
+            public_id: imageFile.filename,
+          }
+        };
+      }
+      
+      // Keep existing image from old product if no new image uploaded
+      const oldColor = product.variations.colors?.find(c => c.name === color.name);
+      if (oldColor?.image?.url) {
+        return {
+          ...color,
+          image: oldColor.image
+        };
+      }
+      
+      return color;
+    });
+
+    // Delete old images after mapping
+    for (const publicId of imagesToDelete) {
+      console.log('🗑️ Deleting old color image:', publicId);
+      await remove(publicId);
+    }
+
+    updateData.colors = updateData.variations.colors;
+  }
+
+  const updatedProduct = await Product.findByIdAndUpdate(
+    req.params.id,
+    { $set: updateData },
+    { runValidators: true, new: true }
+  );
+
+  console.log('Product after update:', JSON.stringify(updatedProduct, null, 2));
+
+  // Update store if provided
+  if (req.body.store) {
+    console.log('Updating store with product...');
+    await Store.findByIdAndUpdate(req.body.store, {
+      $push: { products: updatedProduct._id },
+    });
+  }
+
+  res.status(200).json({
+    acknowledgement: true,
+    message: "Ok",
+    description: "Product updated successfully",
+    data: updatedProduct,
+  });
+  
+  console.log('=== UPDATE PRODUCT COMPLETE ===');
 };
 
 /* delete product */

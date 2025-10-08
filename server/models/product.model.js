@@ -102,6 +102,16 @@ const productSchema = new mongoose.Schema(
           group: String,
           hex: String,
           rgb: String,
+          image: {
+            url: {
+              type: String,
+              default: "",
+            },
+            public_id: {
+              type: String,
+              default: "",
+            },
+          },
         }
       ],
       sizes: [String],
@@ -122,6 +132,16 @@ const productSchema = new mongoose.Schema(
         group: String,
         hex: String,
         rgb: String,
+        image: {
+          url: {
+            type: String,
+            default: "",
+          },
+          public_id: {
+            type: String,
+            default: "",
+          },
+        },
       }
     ],
 
@@ -146,10 +166,9 @@ const productSchema = new mongoose.Schema(
       default: ["all-season"],
     },
 
-    // for product status (updated to support multiple statuses)
+    // for product status (updated to support multiple statuses - DYNAMIC, NO ENUM)
     productStatus: {
       type: [String],
-      enum: ["regular", "featured", "trending", "best-seller"],
       default: ["regular"],
     },
 

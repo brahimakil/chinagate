@@ -37,6 +37,7 @@ router.post(
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "gallery", maxCount: 5 },
+    { name: "colorImages", maxCount: 50 }, // 🆕 Support up to 50 color images
   ]),
   productController.addProduct
 );
@@ -52,6 +53,7 @@ router.patch(
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "gallery", maxCount: 5 },
+    { name: "colorImages", maxCount: 50 }, // 🆕 Support up to 50 color images
   ]),
   productController.updateProduct
 );

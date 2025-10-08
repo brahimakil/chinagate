@@ -66,6 +66,7 @@ app.use("/api/payment", require("./routes/payment.route"));
 app.use("/api/purchase", require("./routes/purchase.route"));
 // ADD: system settings route
 app.use("/api/system", require("./routes/system.route"));
+app.use("/api/section", require("./routes/section.route")); // ADD THIS LINE
 
 /* global error handler */
 app.use(error);
