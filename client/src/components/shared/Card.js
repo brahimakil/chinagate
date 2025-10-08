@@ -124,13 +124,15 @@ const Card = ({ index, product, ...rest }) => {
       }
     >
       {/* Product Image */}
-      <div className="relative w-full h-64 mb-6 rounded-xl overflow-hidden bg-gray-50">
-        <Image
-          src={product?.thumbnail?.url}
-          alt={product?.title}
-          fill
-          className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
-        />
+      <div className="relative w-full h-48 mb-6 rounded-xl overflow-hidden bg-gray-50 p-4">
+        <div className="relative w-full h-full">
+          <Image
+            src={product?.thumbnail?.url}
+            alt={product?.title}
+            fill
+            className="object-contain object-center group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
         
         {/* Favorite Button */}
         <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -17,6 +17,7 @@ import { BsBoxSeam, BsGrid3X3Gap } from "react-icons/bs";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Niche from "@/components/shared/skeletonLoading/Niche";
+import { useGetSystemSettingsQuery } from "@/services/system/systemApi";
 
 const BrandsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,6 +41,9 @@ const BrandsPage = () => {
     data: productsData,
     isLoading: fetchingProducts,
   } = useGetProductsQuery();
+
+  const { data: settingsData } = useGetSystemSettingsQuery();
+  const banner = settingsData?.data?.brandsPageBanner;
 
   const brands = useMemo(() => brandsData?.data || [], [brandsData]);
   const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
@@ -122,24 +126,47 @@ const BrandsPage = () => {
 
   return (
     <Main>
-      <div className="min-h-screen bg-white">
-        <Container>
-          <div className="py-20">
-            {/* Header Section */}
-            <div 
-              className={`text-center mb-16 transform transition-all duration-1000 ${
-                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
-              }`}
-            >
-              <h1 className="text-5xl font-bold text-black mb-4">
-                Brand <span className="text-black">Ecosystem</span>
-              </h1>
-              <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                Explore our premium brands and discover their category specializations. Each brand tells a unique story.
-              </p>
-              <div className="mt-8 w-24 h-1 bg-black mx-auto rounded-full"></div>
-            </div>
+      <div className="min-h-screen">
+        {/* Banner */}
+        {banner && (
+          <div className="relative w-full py-16 md:py-24 overflow-hidden">
+            {banner.image?.url ? (
+              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${banner.image.url})` }}></div>
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-100"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(16,185,129,0.1),transparent_50%)]"></div>
+              </>
+            )}
+            <div className="absolute inset-0" style={{ backgroundColor: banner.overlayColor || 'rgba(0, 0, 0, 0.5)' }}></div>
+            {!banner.image?.url && (
+              <>
+                <div className="absolute top-10 left-10 w-20 h-20 bg-emerald-200/30 rounded-full blur-xl animate-pulse"></div>
+                <div className="absolute top-32 right-20 w-16 h-16 bg-green-300/20 rounded-full blur-lg animate-bounce"></div>
+              </>
+            )}
+            <Container>
+              <div className="relative text-center z-10">
+                <div className="inline-flex items-center space-x-3 px-6 md:px-8 py-3 md:py-4 bg-black/90 backdrop-blur-sm rounded-full text-xs md:text-sm font-bold mb-6 md:mb-8 shadow-xl border border-white/10" style={{ color: '#FFFFFF' }}>
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  <span className="tracking-wider">{banner.badge || "SHOP BY BRAND"}</span>
+                </div>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight px-4" style={{ color: banner.textColor || '#111827' }}>
+                  {banner.title || "🏷️ Browse Brands"}
+                </h1>
+                <p className="text-lg md:text-2xl mb-2 md:mb-4 font-light px-4 opacity-90" style={{ color: banner.textColor || '#64748b' }}>
+                  {banner.subtitle || "Shop Your Favorite Brands"}
+                </p>
+                <p className="text-sm md:text-lg max-w-3xl mx-auto mb-8 md:mb-12 leading-relaxed px-4 opacity-80" style={{ color: banner.textColor || '#64748b' }}>
+                  {banner.description || "Discover products from the world's leading brands"}
+                </p>
+              </div>
+            </Container>
+          </div>
+        )}
 
+        <Container>
+          <div className="py-12">
             {/* Controls Section */}
             <div 
               className={`mb-12 transform transition-all duration-1000 delay-200 ${

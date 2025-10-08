@@ -109,7 +109,7 @@ const ShowBrands = () => {
               Shop by <span className="text-slate-600">Brand</span>
             </h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
-              Discover premium products from the world's most trusted brands
+              4
             </p>
           </div>
 
@@ -173,9 +173,7 @@ const ShowBrands = () => {
                       </div>
                       
                       {/* Brand Name */}
-                      <h3 className="text-sm font-semibold text-slate-600 text-center line-clamp-1 group-hover/brand:text-gray-800 transition-colors duration-300">
-                        {brand.title}
-                      </h3>
+                   
                     </div>
 
                     {/* Smoother Hover Glow Effect */}

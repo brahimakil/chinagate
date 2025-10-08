@@ -155,6 +155,10 @@ const Dashboard = ({ children }) => {
         icon: "⚙️",
         paths: [
           {
+            name: "🎨 Manage Sections",
+            path: "/dashboard/admin/manage-sections",
+          },
+          {
             name: "🏠 Home Page Settings",
             path: "/dashboard/admin/settings",
           },

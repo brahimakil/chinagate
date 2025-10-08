@@ -1,5 +1,5 @@
 /**
- * Title: Admin Settings Management
+ * Title: Admin Settings Management  
  * Author: China Gate Team
  * Date: 26, September 2025
  */
@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { BsWhatsapp } from "react-icons/bs";
 import { useGetSystemSettingsQuery, useUpdateSystemSettingsMutation } from "@/services/system/systemApi";
+import Image from "next/image";
 
 const Page = () => {
   return (
@@ -26,48 +27,52 @@ const Page = () => {
 };
 
 function SystemSettings() {
-  const [selectedSeasons, setSelectedSeasons] = useState([]);
   const [whatsappCountryCode, setWhatsappCountryCode] = useState("+961");
   const [whatsappPhone, setWhatsappPhone] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // 🆕 Banner states with text fields
+  const [banners, setBanners] = useState({
+    homePage: { 
+      image: null, imageUrl: "", overlayColor: "rgba(0, 0, 0, 0.5)", textColor: "#FFFFFF",
+      badge: "WELCOME TO OUR STORE", title: "🏪 Welcome to China Gate", 
+      subtitle: "Your One-Stop Shop for Quality Products", 
+      description: "Discover amazing products curated just for you. Shop with confidence!" 
+    },
+    categoriesPage: { 
+      image: null, imageUrl: "", overlayColor: "rgba(0, 0, 0, 0.5)", textColor: "#FFFFFF",
+      badge: "SHOP BY CATEGORY", title: "📂 Browse Categories", 
+      subtitle: "Explore Our Product Categories", 
+      description: "Find exactly what you're looking for by browsing our organized categories" 
+    },
+    brandsPage: { 
+      image: null, imageUrl: "", overlayColor: "rgba(0, 0, 0, 0.5)", textColor: "#FFFFFF",
+      badge: "SHOP BY BRAND", title: "🏷️ Browse Brands", 
+      subtitle: "Shop Your Favorite Brands", 
+      description: "Discover products from the world's leading brands" 
+    },
+    allProductsPage: { 
+      image: null, imageUrl: "", overlayColor: "rgba(0, 0, 0, 0.5)", textColor: "#FFFFFF",
+      badge: "ALL PRODUCTS", title: "📦 All Products", 
+      subtitle: "Complete Collection", 
+      description: "Browse our entire product catalog" 
+    },
+  });
 
   const { data: settingsData, isSuccess, refetch } = useGetSystemSettingsQuery();
   const [updateSettings, { isLoading: savingSettings }] = useUpdateSystemSettingsMutation();
 
-  // Load seasons from localStorage only (unchanged)
+  // Load settings from DB
   useEffect(() => {
-    const savedSeasons = localStorage.getItem('homePageSeasons');
-    if (savedSeasons) {
-      setSelectedSeasons(JSON.parse(savedSeasons));
-    } else {
-      setSelectedSeasons(['winter']);
-    }
-  }, []);
+    if (!isSuccess || !settingsData?.data) return;
 
-  // Load WhatsApp number from DB whenever data changes
-  useEffect(() => {
-    console.log("🔍 WhatsApp useEffect triggered:");
-    console.log("  - isSuccess:", isSuccess);
-    console.log("  - settingsData:", settingsData);
-    console.log("  - settingsData?.data:", settingsData?.data);
-    console.log("  - whatsappNumber from DB:", settingsData?.data?.whatsappNumber);
-
-    if (!isSuccess || !settingsData?.data) {
-      console.log("❌ Early return - no success or no data");
-      return;
-    }
-
-    const dbNumber = (settingsData.data.whatsappNumber || "").trim();
-    console.log("📱 Processing DB number:", `"${dbNumber}"`);
+    const settings = settingsData.data;
     
+    // Load WhatsApp
+    const dbNumber = (settings.whatsappNumber || "").trim();
     if (dbNumber.length > 0) {
-      // Extract country code and phone number - FIXED REGEX
-      // Look for known country codes first
-      let code = "+961"; // default
+      let code = "+961";
       let phone = dbNumber;
-      
       const countryCodes = ["+961", "+1", "+44", "+971", "+966", "+20"];
-      
       for (const countryCode of countryCodes) {
         if (dbNumber.startsWith(countryCode)) {
           code = countryCode;
@@ -75,296 +80,392 @@ function SystemSettings() {
           break;
         }
       }
-      
-      console.log("✅ Setting WhatsApp from DB:");
-      console.log("  - Country Code:", code);
-      console.log("  - Phone:", phone);
-      
       setWhatsappCountryCode(code);
       setWhatsappPhone(phone);
-    } else {
-      console.log("🔄 No number in DB - resetting to defaults");
-      setWhatsappCountryCode("+961");
-      setWhatsappPhone("");
     }
+
+    // Load banners
+    setBanners({
+      homePage: {
+        image: null,
+        imageUrl: settings.homePageBanner?.image?.url || "",
+        overlayColor: settings.homePageBanner?.overlayColor || "rgba(0, 0, 0, 0.5)",
+        textColor: settings.homePageBanner?.textColor || "#FFFFFF",
+        badge: settings.homePageBanner?.badge || "WELCOME TO OUR STORE",
+        title: settings.homePageBanner?.title || "🏪 Welcome to China Gate",
+        subtitle: settings.homePageBanner?.subtitle || "Your One-Stop Shop for Quality Products",
+        description: settings.homePageBanner?.description || "Discover amazing products curated just for you. Shop with confidence!",
+      },
+      categoriesPage: {
+        image: null,
+        imageUrl: settings.categoriesPageBanner?.image?.url || "",
+        overlayColor: settings.categoriesPageBanner?.overlayColor || "rgba(0, 0, 0, 0.5)",
+        textColor: settings.categoriesPageBanner?.textColor || "#FFFFFF",
+        badge: settings.categoriesPageBanner?.badge || "SHOP BY CATEGORY",
+        title: settings.categoriesPageBanner?.title || "📂 Browse Categories",
+        subtitle: settings.categoriesPageBanner?.subtitle || "Explore Our Product Categories",
+        description: settings.categoriesPageBanner?.description || "Find exactly what you're looking for",
+      },
+      brandsPage: {
+        image: null,
+        imageUrl: settings.brandsPageBanner?.image?.url || "",
+        overlayColor: settings.brandsPageBanner?.overlayColor || "rgba(0, 0, 0, 0.5)",
+        textColor: settings.brandsPageBanner?.textColor || "#FFFFFF",
+        badge: settings.brandsPageBanner?.badge || "SHOP BY BRAND",
+        title: settings.brandsPageBanner?.title || "🏷️ Browse Brands",
+        subtitle: settings.brandsPageBanner?.subtitle || "Shop Your Favorite Brands",
+        description: settings.brandsPageBanner?.description || "Discover products from leading brands",
+      },
+      allProductsPage: {
+        image: null,
+        imageUrl: settings.allProductsPageBanner?.image?.url || "",
+        overlayColor: settings.allProductsPageBanner?.overlayColor || "rgba(0, 0, 0, 0.5)",
+        textColor: settings.allProductsPageBanner?.textColor || "#FFFFFF",
+        badge: settings.allProductsPageBanner?.badge || "ALL PRODUCTS",
+        title: settings.allProductsPageBanner?.title || "📦 All Products",
+        subtitle: settings.allProductsPageBanner?.subtitle || "Complete Collection",
+        description: settings.allProductsPageBanner?.description || "Browse our entire catalog",
+      },
+    });
   }, [isSuccess, settingsData]);
 
-  // Debug state changes
-  useEffect(() => {
-    console.log("📊 State Update - whatsappCountryCode:", whatsappCountryCode);
-  }, [whatsappCountryCode]);
+  // Handle banner image upload
+  const handleBannerImageChange = (page, e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setBanners(prev => ({
+        ...prev,
+        [page]: {
+          ...prev[page],
+          image: file,
+        }
+      }));
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBanners(prev => ({
+          ...prev,
+          [page]: {
+            ...prev[page],
+            imageUrl: reader.result,
+          }
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  useEffect(() => {
-    console.log("📊 State Update - whatsappPhone:", whatsappPhone);
-  }, [whatsappPhone]);
-
-  const handleSeasonToggle = (seasonValue) => {
-    setSelectedSeasons(prev => {
-      if (prev.includes(seasonValue)) {
-        return prev.filter(s => s !== seasonValue);
-      } else {
-        return [...prev, seasonValue];
+  // Handle banner field changes
+  const handleBannerChange = (page, field, value) => {
+    setBanners(prev => ({
+      ...prev,
+      [page]: {
+        ...prev[page],
+        [field]: value,
       }
-    });
+    }));
   };
 
-  const handleSaveSettings = () => {
-    setIsLoading(true);
+  // Handle save
+  const handleSaveSettings = async () => {
+    try {
+      const formData = new FormData();
+      
+      // WhatsApp
+      const fullWhatsappNumber = `${whatsappCountryCode}${whatsappPhone}`.trim();
+      formData.append("whatsappNumber", fullWhatsappNumber);
 
-    // Save seasons to localStorage
-    localStorage.setItem('homePageSeasons', JSON.stringify(selectedSeasons));
+      // Helper to append banner data
+      const appendBanner = (prefix, data) => {
+        if (data.image) formData.append(`${prefix}Image`, data.image);
+        formData.append(`${prefix}OverlayColor`, data.overlayColor);
+        formData.append(`${prefix}TextColor`, data.textColor);
+        formData.append(`${prefix}Badge`, data.badge);
+        formData.append(`${prefix}Title`, data.title);
+        formData.append(`${prefix}Subtitle`, data.subtitle);
+        formData.append(`${prefix}Description`, data.description);
+      };
 
-    // Save WhatsApp number to DB (empty string if no phone)
-    const payloadNumber = whatsappPhone.trim() 
-      ? `${whatsappCountryCode}${whatsappPhone}` 
-      : "";
+      appendBanner('homePage', banners.homePage);
+      appendBanner('categoriesPage', banners.categoriesPage);
+      appendBanner('brandsPage', banners.brandsPage);
+      appendBanner('allProductsPage', banners.allProductsPage);
 
-    console.log("💾 Saving WhatsApp number:");
-    console.log("  - Country Code:", whatsappCountryCode);
-    console.log("  - Phone:", whatsappPhone);
-    console.log("  - Complete payload:", payloadNumber);
-
-    updateSettings({ whatsappNumber: payloadNumber })
-      .unwrap()
-      .then((response) => {
-        console.log("✅ Save successful, response:", response);
-        setIsLoading(false);
-        toast.success('Settings saved successfully!');
-        
-        // Force refetch to get fresh data
-        console.log("🔄 Forcing refetch...");
-        refetch();
-      })
-      .catch((err) => {
-        console.log("❌ Save failed:", err);
-        setIsLoading(false);
-        toast.error(err?.data?.description || 'Failed to save settings');
-      });
+      await updateSettings(formData).unwrap();
+      toast.success("Settings saved successfully!");
+      refetch();
+    } catch (error) {
+      toast.error("Failed to save settings");
+      console.error(error);
+    }
   };
 
-  // Calculate complete WhatsApp number for display
-  const completeWhatsappNumber = whatsappPhone.trim() 
-    ? `${whatsappCountryCode}${whatsappPhone}` 
-    : "";
+  const renderBannerSection = (title, page, icon) => (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+      <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <span className="text-2xl">{icon}</span>
+        {title}
+      </h3>
 
-  const seasons = [
-    { value: "spring", label: "Spring", icon: "🌸" },
-    { value: "summer", label: "Summer", icon: "☀️" },
-    { value: "autumn", label: "Autumn", icon: "🍂" },
-    { value: "winter", label: "Winter", icon: "❄️" }
-  ];
-
-  const countryCodes = [
-    { code: "+961", country: "Lebanon", flag: "🇱🇧" },
-    { code: "+1", country: "USA/Canada", flag: "🇺🇸" },
-    { code: "+44", country: "UK", flag: "🇬🇧" },
-    { code: "+971", country: "UAE", flag: "🇦🇪" },
-    { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
-    { code: "+20", country: "Egypt", flag: "🇪🇬" },
-    { code: "+90", country: "Turkey", flag: "🇹🇷" },
-    { code: "+33", country: "France", flag: "🇫🇷" },
-    { code: "+49", country: "Germany", flag: "🇩🇪" },
-    { code: "+86", country: "China", flag: "🇨🇳" },
-    { code: "+91", country: "India", flag: "🇮🇳" },
-    { code: "+7", country: "Russia", flag: "🇷🇺" },
-    { code: "+81", country: "Japan", flag: "🇯🇵" },
-    { code: "+82", country: "South Korea", flag: "🇰🇷" },
-  ];
-
-  return (
-    <div className="space-y-6">
-      {/* WhatsApp Configuration */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex items-center space-x-3 mb-6">
-          <BsWhatsapp className="text-3xl text-green-500" />
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900">WhatsApp Configuration</h3>
-            <p className="text-sm text-gray-600">Set your business WhatsApp number for product inquiries</p>
-          </div>
+      {/* Text Content Fields */}
+      <div className="space-y-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Badge Text</label>
+          <input
+            type="text"
+            value={banners[page]?.badge}
+            onChange={(e) => handleBannerChange(page, 'badge', e.target.value)}
+            placeholder="WELCOME TO OUR STORE"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
-        <div className="space-y-4">
-          {/* Country Code Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Country Code
-            </label>
-            <select
-              value={whatsappCountryCode}
-              onChange={(e) => setWhatsappCountryCode(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-              {countryCodes.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.flag} {country.country} ({country.code})
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Main Title</label>
+          <input
+            type="text"
+            value={banners[page]?.title}
+            onChange={(e) => handleBannerChange(page, 'title', e.target.value)}
+            placeholder="Welcome to China Gate"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
-          {/* Phone Number Input - FIXED */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone Number (without country code)
-            </label>
-            <input
-              type="tel"
-              value={whatsappPhone}
-              onChange={(e) => setWhatsappPhone(e.target.value.replace(/\D/g, ''))}
-              placeholder={whatsappPhone || "e.g., 71234567"}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+          <input
+            type="text"
+            value={banners[page]?.subtitle}
+            onChange={(e) => handleBannerChange(page, 'subtitle', e.target.value)}
+            placeholder="Your One-Stop Shop"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <textarea
+            value={banners[page]?.description}
+            onChange={(e) => handleBannerChange(page, 'description', e.target.value)}
+            placeholder="Discover amazing products..."
+            rows="2"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      {/* Image Upload */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Banner Image (Optional)
+        </label>
+        {banners[page]?.imageUrl && (
+          <div className="relative w-full h-32 md:h-40 mb-3 rounded-lg overflow-hidden">
+            <Image
+              src={banners[page].imageUrl}
+              alt={`${title} banner`}
+              fill
+              className="object-cover"
             />
-          </div>
-
-          {/* Full Number Preview - FIXED */}
-          <div className="bg-green-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Complete WhatsApp Number:</p>
-            <p className="text-lg font-semibold text-green-700">
-              {completeWhatsappNumber || 'Not set'}
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              This number will be used for "Chat on WhatsApp" button on product pages
-            </p>
-          </div>
-
-          {/* Clear Button */}
-          <div className="flex gap-3">
             <button
               type="button"
               onClick={() => {
-                setWhatsappPhone('');
+                setBanners(prev => ({
+                  ...prev,
+                  [page]: { ...prev[page], image: null, imageUrl: '' }
+                }));
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+              className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-lg z-10"
             >
-              Clear WhatsApp Number
+              ×
             </button>
-            {completeWhatsappNumber && (
-              <a
-                href={`https://wa.me/${completeWhatsappNumber.replace(/\+/g, '')}?text=Hello! I'm testing the WhatsApp integration.`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-              >
-                <BsWhatsapp className="text-xl" />
-                <span>Test WhatsApp Number</span>
-              </a>
-            )}
+          </div>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleBannerImageChange(page, e)}
+          className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        />
+        <p className="text-xs text-gray-500 mt-1">1920x400px recommended</p>
+      </div>
+
+      {/* Color Settings */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Overlay Color & Opacity
+          </label>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={banners[page]?.overlayColor.match(/#[0-9A-Fa-f]{6}/)?.[0] || '#000000'}
+                onChange={(e) => {
+                  const hex = e.target.value;
+                  const opacity = banners[page]?.overlayColor.match(/[\d.]+\)$/)?.[0]?.replace(')', '') || '0.5';
+                  const r = parseInt(hex.slice(1, 3), 16);
+                  const g = parseInt(hex.slice(3, 5), 16);
+                  const b = parseInt(hex.slice(5, 7), 16);
+                  handleBannerChange(page, 'overlayColor', `rgba(${r}, ${g}, ${b}, ${opacity})`);
+                }}
+                className="w-12 md:w-16 h-10 border border-gray-300 rounded-lg cursor-pointer"
+              />
+              <input
+                type="text"
+                value={banners[page]?.overlayColor}
+                onChange={(e) => handleBannerChange(page, 'overlayColor', e.target.value)}
+                placeholder="rgba(0, 0, 0, 0.5)"
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">
+                Opacity: {(parseFloat(banners[page]?.overlayColor.match(/[\d.]+\)$/)?.[0]?.replace(')', '') || 0.5) * 100).toFixed(0)}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={banners[page]?.overlayColor.match(/[\d.]+\)$/)?.[0]?.replace(')', '') || 0.5}
+                onChange={(e) => {
+                  const match = banners[page]?.overlayColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                  if (match) {
+                    const [, r, g, b] = match;
+                    handleBannerChange(page, 'overlayColor', `rgba(${r}, ${g}, ${b}, ${e.target.value})`);
+                  }
+                }}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Text Color
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="color"
+              value={banners[page]?.textColor}
+              onChange={(e) => handleBannerChange(page, 'textColor', e.target.value)}
+              className="w-12 md:w-16 h-10 border border-gray-300 rounded-lg cursor-pointer"
+            />
+            <input
+              type="text"
+              value={banners[page]?.textColor}
+              onChange={(e) => handleBannerChange(page, 'textColor', e.target.value)}
+              placeholder="#FFFFFF"
+              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg"
+            />
           </div>
         </div>
       </div>
 
-      {/* Seasonal Products Configuration */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Seasonal Products</h3>
-        <p className="text-sm text-gray-600 mb-6">Select which seasons to feature on your home page</p>
-        
-        {/* Season Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {/* Spring */}
-          <div
-            className={`
-              flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer transition-all
-              ${selectedSeasons.includes('spring')
-                ? 'border-pink-500 bg-pink-50'
-                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-              }
-            `}
-            onClick={() => handleSeasonToggle('spring')}
-          >
-            <div className="text-4xl mb-3">🌸</div>
-            <div className="text-lg font-medium text-gray-900 mb-1">Spring</div>
-            
-            {selectedSeasons.includes('spring') && (
-              <div className="mt-2 px-3 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
-                Featured
-              </div>
-            )}
-          </div>
-
-          {/* Summer */}
-          <div
-            className={`
-              flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer transition-all
-              ${selectedSeasons.includes('summer')
-                ? 'border-yellow-500 bg-yellow-50'
-                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-              }
-            `}
-            onClick={() => handleSeasonToggle('summer')}
-          >
-            <div className="text-4xl mb-3">☀️</div>
-            <div className="text-lg font-medium text-gray-900 mb-1">Summer</div>
-            
-            {selectedSeasons.includes('summer') && (
-              <div className="mt-2 px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                Featured
-              </div>
-            )}
-          </div>
-
-          {/* Autumn */}
-          <div
-            className={`
-              flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer transition-all
-              ${selectedSeasons.includes('autumn')
-                ? 'border-orange-500 bg-orange-50'
-                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-              }
-            `}
-            onClick={() => handleSeasonToggle('autumn')}
-          >
-            <div className="text-4xl mb-3">🍂</div>
-            <div className="text-lg font-medium text-gray-900 mb-1">Autumn</div>
-            
-            {selectedSeasons.includes('autumn') && (
-              <div className="mt-2 px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                Featured
-              </div>
-            )}
-          </div>
-
-          {/* Winter */}
-          <div
-            className={`
-              flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer transition-all
-              ${selectedSeasons.includes('winter')
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-              }
-            `}
-            onClick={() => handleSeasonToggle('winter')}
-          >
-            <div className="text-4xl mb-3">❄️</div>
-            <div className="text-lg font-medium text-gray-900 mb-1">Winter</div>
-            
-            {selectedSeasons.includes('winter') && (
-              <div className="mt-2 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Featured
-              </div>
-            )}
+      {/* Preview */}
+      <div className="bg-gray-50 rounded-lg p-3">
+        <p className="text-xs font-medium text-gray-700 mb-2">Preview:</p>
+        <div 
+          className="relative w-full h-24 md:h-32 rounded-lg overflow-hidden flex flex-col items-center justify-center"
+          style={{
+            backgroundImage: banners[page]?.imageUrl ? `url(${banners[page].imageUrl})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          <div 
+            className="absolute inset-0"
+            style={{ backgroundColor: banners[page]?.overlayColor }}
+          ></div>
+          <div className="relative z-10 text-center px-4">
+            <div 
+              className="inline-block text-xs font-bold mb-1 px-3 py-1 rounded-full bg-black/50"
+              style={{ color: banners[page]?.textColor }}
+            >
+              {banners[page]?.badge}
+            </div>
+            <h3 
+              className="text-lg md:text-xl font-bold mb-1"
+              style={{ color: banners[page]?.textColor }}
+            >
+              {banners[page]?.title}
+            </h3>
+            <p 
+              className="text-xs opacity-90"
+              style={{ color: banners[page]?.textColor }}
+            >
+              {banners[page]?.subtitle}
+            </p>
           </div>
         </div>
+      </div>
+    </div>
+  );
 
-        {/* Preview */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h4 className="font-medium text-gray-900 mb-2">Preview:</h4>
-          <p className="text-sm text-gray-600">
-            {selectedSeasons.length > 0 
-              ? `Products for ${selectedSeasons.map(s => seasons.find(season => season.value === s)?.label).join(', ')} will be featured at the top of the home page.`
-              : 'No seasons selected. All products will display normally without seasonal highlighting.'
-            }
-          </p>
+  return (
+    <div className="space-y-6">
+      {/* WhatsApp Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+        <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <BsWhatsapp className="text-green-500 text-2xl" />
+          WhatsApp Configuration
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Country Code</label>
+            <select
+              value={whatsappCountryCode}
+              onChange={(e) => setWhatsappCountryCode(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="+961">🇱🇧 +961 (Lebanon)</option>
+              <option value="+1">🇺🇸 +1 (USA)</option>
+              <option value="+44">🇬🇧 +44 (UK)</option>
+              <option value="+971">🇦🇪 +971 (UAE)</option>
+              <option value="+966">🇸🇦 +966 (Saudi Arabia)</option>
+              <option value="+20">🇪🇬 +20 (Egypt)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            <input
+              type="tel"
+              value={whatsappPhone}
+              onChange={(e) => setWhatsappPhone(e.target.value)}
+              placeholder="71234567"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
+        {whatsappPhone && (
+          <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+            <p className="text-sm text-gray-700">
+              Full Number: <span className="font-semibold">{whatsappCountryCode}{whatsappPhone}</span>
+            </p>
+          </div>
+        )}
+      </div>
+      
+      {/* Banner Configurations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {renderBannerSection("Home Page Banner", "homePage", "🏠")}
+        {renderBannerSection("Categories Page Banner", "categoriesPage", "📂")}
+        {renderBannerSection("Brands Page Banner", "brandsPage", "🏷️")}
+        {renderBannerSection("All Products Page Banner", "allProductsPage", "📦")}
       </div>
 
       {/* Save Button */}
-      <button
-        onClick={handleSaveSettings}
-        disabled={isLoading}
-        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
-      >
-        {isLoading ? 'Saving...' : 'Save All Settings'}
-      </button>
+      <div className="flex justify-end">
+        <button
+          onClick={handleSaveSettings}
+          disabled={savingSettings}
+          className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-semibold transition-colors shadow-md"
+        >
+          {savingSettings ? "Saving..." : "💾 Save All Settings"}
+        </button>
+      </div>
     </div>
   );
 }

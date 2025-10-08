@@ -30,6 +30,7 @@ export const canimApi = createApi({
     "Favorite",
     "Purchase",
     "Review",
+    "Section",
   ],
   endpoints: () => ({}),
 });

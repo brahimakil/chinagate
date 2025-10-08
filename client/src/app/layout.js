@@ -2,6 +2,7 @@ import Auth from "./auth";
 import Providers from "./providers";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import BottomNav from "@/components/shared/BottomNav";
 
 export const metadata = {
   metadataBase: new URL("https://canim-csr.vercel.app"),
@@ -33,10 +34,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className="pb-16 lg:pb-0">
         <Providers>
           <Auth>{children}</Auth>
           <Toaster />
+          <BottomNav />
         </Providers>
       </body>
     </html>

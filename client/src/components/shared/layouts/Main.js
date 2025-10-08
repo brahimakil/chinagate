@@ -62,9 +62,9 @@ const Main = ({ children }) => {
       {/* Content */}
       <div className="relative z-10 bg-white/70 backdrop-blur-sm">
         <Header />
-        <div className="bg-white/80 backdrop-blur-sm">
+        <main className="bg-white/80 backdrop-blur-sm min-h-screen">
           {children}
-        </div>
+        </main>
         <Footer />
       </div>
 
@@ -147,6 +147,34 @@ const Main = ({ children }) => {
         }
         .animate-wave-reverse { 
           animation: wave-reverse 20s ease-in-out infinite; 
+        }
+      `}</style>
+
+      {/* CRITICAL: Add padding to page content on mobile to prevent overlap */}
+      <style jsx global>{`
+        /* Mobile-only: Add padding at bottom for fixed nav bar */
+        @media (max-width: 1023px) {
+          /* Prevent any scrolling issues */
+          html {
+            overflow-x: hidden;
+          }
+          
+          /* Ensure the main layout has proper bottom padding */
+          main, 
+          [class*="min-h-screen"],
+          .relative.z-10 {
+            padding-bottom: 5rem !important;
+          }
+          
+          /* Ensure footer doesn't overlap with bottom nav */
+          footer {
+            margin-bottom: 5rem !important;
+          }
+          
+          /* Smooth touch scrolling */
+          * {
+            -webkit-overflow-scrolling: touch;
+          }
         }
       `}</style>
     </div>

@@ -135,6 +135,19 @@ const Sidebar = () => {
         ],
       },
       {
+        name: "Homepage Management",
+        paths: [
+          {
+            name: "Manage Sections",
+            path: "/dashboard/admin/manage-sections",
+          },
+          {
+            name: "Settings",
+            path: "/dashboard/admin/settings",
+          },
+        ],
+      },
+      {
         name: "Account Features",
         paths: [
           {

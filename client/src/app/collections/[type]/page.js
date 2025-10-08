@@ -13,9 +13,11 @@ import Card from "@/components/shared/Card";
 import { useGetProductsQuery } from "@/services/product/productApi";
 import { useGetCategoriesQuery } from "@/services/category/categoryApi";
 import { useGetBrandsQuery } from "@/services/brand/brandApi";
+import { useGetSectionsQuery } from "@/services/section/sectionApi";
 import ProductCard from "@/components/shared/skeletonLoading/ProductCard";
 import { toast } from "react-hot-toast";
 import Main from "@/components/shared/layouts/Main";
+import { useGetSystemSettingsQuery } from "@/services/system/systemApi";
 
 const CollectionPage = () => {
   const params = useParams();
@@ -44,10 +46,14 @@ const CollectionPage = () => {
   const { data: productsData, error: productsError, isLoading: productsLoading } = useGetProductsQuery();
   const { data: categoriesData } = useGetCategoriesQuery();
   const { data: brandsData } = useGetBrandsQuery();
+  const { data: sectionsData } = useGetSectionsQuery();
+  const { data: settingsData } = useGetSystemSettingsQuery();
 
   const products = useMemo(() => productsData?.data || [], [productsData]);
   const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
   const brands = useMemo(() => brandsData?.data || [], [brandsData]);
+  const sections = useMemo(() => sectionsData?.data || [], [sectionsData]);
+  const settings = settingsData?.data;
 
   // Extract all unique colors from products
   const availableColors = useMemo(() => {
@@ -148,6 +154,20 @@ const CollectionPage = () => {
 
   // Get collection info
   const getCollectionInfo = () => {
+    // 🆕 Try to find section from database first
+    const foundSection = sections.find(s => s.filterKey === type);
+    
+    if (foundSection) {
+      return {
+        title: foundSection.displayName,
+        subtitle: foundSection.description || `Featured ${foundSection.displayName}`,
+        description: foundSection.description || `Discover our curated ${foundSection.displayName.toLowerCase()} collection`,
+        icon: foundSection.icon,
+        badge: foundSection.displayName.toUpperCase(),
+        accentColor: foundSection.color || 'blue',
+      };
+    }
+
     // If we have URL filters, customize the title
     if (categoryFilter || brandFilter || storeFilter) {
       const categoryName = categories.find(cat => cat._id === categoryFilter)?.title;
@@ -240,7 +260,46 @@ const CollectionPage = () => {
       // Skip hidden products
       if (product.isHidden) return false;
 
-      // Filter by collection type
+      // 🆕 Check if this is a custom section from database
+      const customSection = sections.find(s => s.filterKey === type);
+      
+      console.log(`🔍 Looking for section with filterKey: "${type}"`);
+      console.log('Found custom section:', customSection);
+      
+      if (customSection) {
+        console.log(`✅ Using custom section: ${customSection.displayName} (filterKey: ${customSection.filterKey})`);
+        
+        // 🆕 Special handling for seasonal with database seasons
+        if (customSection.filterKey === "seasonal" && customSection.seasons && customSection.seasons.length > 0) {
+          if (Array.isArray(product.season)) {
+            const matches = product.season.some(productSeason => 
+              customSection.seasons.includes(productSeason)
+            );
+            console.log(`  Product "${product.title}" seasons:`, product.season, '→ Matches:', matches);
+            return matches;
+          } else {
+            const matches = customSection.seasons.includes(product.season) || product.season === "all-season";
+            console.log(`  Product "${product.title}" season:`, product.season, '→ Matches:', matches);
+            return matches;
+          }
+        }
+        
+        // Filter by productStatus using the section's filterKey
+        console.log(`  Checking product "${product.title}" productStatus:`, product.productStatus);
+        if (Array.isArray(product.productStatus)) {
+          const matches = product.productStatus.includes(customSection.filterKey);
+          console.log(`  → Product has section? ${matches}`);
+          return matches;
+        } else {
+          const matches = product.productStatus === customSection.filterKey;
+          console.log(`  → Product has section? ${matches}`);
+          return matches;
+        }
+      }
+
+      console.log(`⚠️ No custom section found for type: "${type}", using fallback logic`);
+
+      // Otherwise use existing fallback logic
       switch (type) {
         case 'seasonal':
           const savedSeasons = typeof window !== 'undefined' ? localStorage.getItem('homePageSeasons') : null;
@@ -377,7 +436,7 @@ const CollectionPage = () => {
 
     console.log('Final filtered products:', filtered.length);
     return filtered;
-  }, [products, type, categoryFilter, brandFilter, storeFilter, selectedCategories, selectedBrands, selectedColors, selectedCustomSpecs, priceRange, sortBy]);
+  }, [products, type, sections, categoryFilter, brandFilter, storeFilter, selectedCategories, selectedBrands, selectedColors, selectedCustomSpecs, priceRange, sortBy]);
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -448,6 +507,13 @@ const CollectionPage = () => {
   };
 
   const collectionInfo = getCollectionInfo();
+  
+  // Get banner - use section banner if exists, otherwise use all products banner for type=all
+  const currentSection = sections.find(s => s.filterKey === type);
+  const banner = currentSection || (type === 'all' && settings?.allProductsPageBanner);
+
+  // Helper to get current section data
+  // const currentSection = sections.find(s => s.filterKey === type);
 
   useEffect(() => {
     if (productsError) {
@@ -460,73 +526,121 @@ const CollectionPage = () => {
   return (
     <Main>
       <div className="min-h-screen">
-        {/* Beautiful Hero Section - Same as before */}
-        <div className="relative py-24 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100"></div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.1),transparent_50%)] bg-[radial-gradient(circle_at_70%_80%,rgba(120,119,198,0.08),transparent_50%)]"></div>
+        {/* Dynamic Hero Banner */}
+        <div className="relative py-16 md:py-24 overflow-hidden">
+          {/* Background Image */}
+          {banner?.bannerImage?.url || banner?.image?.url ? (
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url(${banner.bannerImage?.url || banner.image?.url})`,
+              }}
+            ></div>
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100"></div>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.1),transparent_50%)]"></div>
+            </>
+          )}
           
-          <div className="absolute top-10 left-10 w-20 h-20 bg-slate-200/30 rounded-full blur-xl animate-pulse"></div>
-          <div className="absolute top-32 right-20 w-16 h-16 bg-gray-300/20 rounded-full blur-lg animate-bounce"></div>
-          <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-slate-300/25 rounded-full blur-md animate-pulse delay-1000"></div>
+          {/* Overlay */}
+          <div 
+            className="absolute inset-0"
+            style={{ 
+              backgroundColor: banner?.bannerOverlayColor || banner?.overlayColor || 'rgba(0, 0, 0, 0.5)'
+            }}
+          ></div>
+
+          {/* Floating Elements */}
+          {!(banner?.bannerImage?.url || banner?.image?.url) && (
+            <>
+              <div className="absolute top-10 left-10 w-20 h-20 bg-slate-200/30 rounded-full blur-xl animate-pulse"></div>
+              <div className="absolute top-32 right-20 w-16 h-16 bg-gray-300/20 rounded-full blur-lg animate-bounce"></div>
+              <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-slate-300/25 rounded-full blur-md animate-pulse"></div>
+            </>
+          )}
 
           <Container>
-            <div className="relative text-center">
-              <div className="inline-flex items-center space-x-3 px-8 py-4 bg-black/90 backdrop-blur-sm rounded-full text-sm font-bold mb-8 shadow-xl border border-white/10">
+            <div className="relative text-center z-10">
+              <div 
+                className="inline-flex items-center space-x-3 px-6 md:px-8 py-3 md:py-4 bg-black/90 backdrop-blur-sm rounded-full text-xs md:text-sm font-bold mb-6 md:mb-8 shadow-xl border border-white/10 text-white"
+              >
                 <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                <span className="text-white tracking-wider">{collectionInfo.badge}</span>
+                <span className="tracking-wider">{banner?.badge || collectionInfo.badge}</span>
               </div>
 
-              <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-                {collectionInfo.icon} <span className="bg-gradient-to-r from-gray-900 via-slate-800 to-gray-900 bg-clip-text text-transparent">{collectionInfo.title}</span>
+              <h1 
+                className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight px-4"
+                style={{ 
+                  color: banner?.bannerTextColor || banner?.textColor || '#111827'
+                }}
+              >
+                {banner?.title || collectionInfo.title}
               </h1>
               
-              <p className="text-2xl text-slate-600 mb-4 font-light">{collectionInfo.subtitle}</p>
-              <p className="text-lg text-slate-500 max-w-3xl mx-auto mb-12 leading-relaxed">{collectionInfo.description}</p>
+              <p 
+                className="text-lg md:text-2xl mb-2 md:mb-4 font-light px-4 opacity-90"
+                style={{ 
+                  color: banner?.bannerTextColor || banner?.textColor || '#64748b'
+                }}
+              >
+                {banner?.subtitle || collectionInfo.subtitle}
+              </p>
+              <p 
+                className="text-sm md:text-lg max-w-3xl mx-auto mb-8 md:mb-12 leading-relaxed px-4 opacity-80"
+                style={{ 
+                  color: banner?.bannerTextColor || banner?.textColor || '#64748b'
+                }}
+              >
+                {banner?.description || collectionInfo.description}
+              </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-                <div className="bg-white/80 backdrop-blur-sm px-8 py-4 rounded-full shadow-lg border border-white/20">
-                  <span className="text-2xl font-bold text-gray-900">{filteredProducts.length}</span>
-                  <span className="text-slate-600 ml-2">Products Available</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 px-4">
+                <div className="bg-white/80 backdrop-blur-sm px-6 md:px-8 py-3 md:py-4 rounded-full shadow-lg border border-white/20">
+                  <span className="text-xl md:text-2xl font-bold text-gray-900">{filteredProducts.length}</span>
+                  <span className="text-slate-600 ml-2 text-sm md:text-base">Products Available</span>
                 </div>
                 
                 <button
                   onClick={() => router.push('/')}
-                  className="group bg-white/90 backdrop-blur-sm text-gray-900 px-8 py-4 rounded-full hover:bg-white transition-all duration-300 shadow-lg border border-white/20 font-medium"
+                  className="group bg-white/90 backdrop-blur-sm text-gray-900 px-6 md:px-8 py-3 md:py-4 rounded-full hover:bg-white transition-all duration-300 shadow-lg border border-white/20 font-medium text-sm md:text-base"
                 >
                   <span className="group-hover:-translate-x-1 transition-transform duration-300 inline-block">←</span>
                   <span className="ml-2">Back to Home</span>
                 </button>
               </div>
 
-              {/* Active Filters Display */}
+              {/* Active Filters Display - with dynamic text color */}
               {(categoryFilter || brandFilter || storeFilter || selectedColors.length > 0 || Object.keys(selectedCustomSpecs).length > 0) && (
-                <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                  <span className="text-sm text-slate-600">Active filters:</span>
+                <div className="mt-6 md:mt-8 flex flex-wrap items-center justify-center gap-2 md:gap-3 px-4">
+                  <span className="text-xs md:text-sm" style={{ color: banner?.bannerTextColor || banner?.textColor || '#64748b' }}>
+                    Active filters:
+                  </span>
                   {categoryFilter && (
-                    <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
+                    <span className="bg-blue-100 text-blue-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium">
                       📂 {categories.find(cat => cat._id === categoryFilter)?.title || 'Category'}
                     </span>
                   )}
                   {brandFilter && (
-                    <span className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium">
+                    <span className="bg-green-100 text-green-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium">
                       🏷️ {brands.find(brand => brand._id === brandFilter)?.title || 'Brand'}
                     </span>
                   )}
                   {selectedColors.map(color => (
-                    <span key={color} className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium">
+                    <span key={color} className="bg-purple-100 text-purple-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium">
                       🎨 {color}
                     </span>
                   ))}
                   {Object.entries(selectedCustomSpecs).map(([specName, values]) => 
                     values.map(value => (
-                      <span key={`${specName}-${value}`} className="bg-orange-100 text-orange-800 px-4 py-2 rounded-full text-sm font-medium">
+                      <span key={`${specName}-${value}`} className="bg-orange-100 text-orange-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium">
                         🔧 {specName}: {value}
                       </span>
                     ))
                   )}
                   <button
                     onClick={clearAllFilters}
-                    className="bg-red-100 text-red-800 px-4 py-2 rounded-full text-sm font-medium hover:bg-red-200 transition-colors"
+                    className="bg-red-100 text-red-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium hover:bg-red-200 transition-colors"
                   >
                     ✕ Clear Filters
                   </button>
@@ -672,7 +786,6 @@ const CollectionPage = () => {
                           
                           {/* Color Name */}
                           <span className="text-xs font-medium text-gray-800 text-center leading-tight max-w-full break-words">
-                            {color.name}
                           </span>
                           
                           {/* Selected Indicator */}

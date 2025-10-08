@@ -1,31 +1,20 @@
 /**
- * Title: Write a program using JavaScript on SearchFilter
- * Author: Hasibul Islam
- * Portfolio: https://devhasibulislam.vercel.app
- * Linkedin: https://linkedin.com/in/devhasibulislam
- * GitHub: https://github.com/devhasibulislam
- * Facebook: https://facebook.com/devhasibulislam
- * Instagram: https://instagram.com/devhasibulislam
- * Twitter: https://twitter.com/devhasibulislam
- * Pinterest: https://pinterest.com/devhasibulislam
- * WhatsApp: https://wa.me/8801906315901
- * Telegram: devhasibulislam
- * Date: 13, November 2023
+ * Title: Professional Search Filter Component
+ * Redesigned for Better UX
  */
 
 import Search from "@/components/icons/Search";
-import React, { useEffect, useMemo, useState } from "react";
-import Modal from "../Modal";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useGetProductsQuery } from "@/services/product/productApi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import SearchCard from "../skeletonLoading/SearchCard";
 import { toast } from "react-hot-toast";
 import Inform from "@/components/icons/Inform";
 
 const SearchFilter = () => {
-  const [open, setOpen] = useState();
+  const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const searchRef = useRef(null);
   const {
     data: productsData,
     error: productsError,
@@ -33,6 +22,23 @@ const SearchFilter = () => {
   } = useGetProductsQuery();
   const products = useMemo(() => productsData?.data || [], [productsData]);
   const router = useRouter();
+
+  // Close search when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (productsError) {
@@ -45,158 +51,198 @@ const SearchFilter = () => {
   };
 
   const filteredProducts = searchTerm?.length
-    ? products.filter(({ title, summary }) => {
+    ? products.filter(({ title, summary, brand, category }) => {
         const lowerTitle = title?.toLowerCase();
         const lowerSummary = summary?.toLowerCase();
+        const lowerBrand = brand?.title?.toLowerCase();
+        const lowerCategory = category?.title?.toLowerCase();
 
         return (
-          lowerTitle?.includes(searchTerm) || lowerSummary?.includes(searchTerm)
+          lowerTitle?.includes(searchTerm) || 
+          lowerSummary?.includes(searchTerm) ||
+          lowerBrand?.includes(searchTerm) ||
+          lowerCategory?.includes(searchTerm)
         );
       })
-    : products;
+    : [];
 
   const highlightMatch = (text, keyword) => {
-    if (!keyword) {
-      return text;
-    }
+    if (!keyword || !text) return text;
 
     const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/gi, "\\$&");
-    const regex = new RegExp(escapedKeyword, "gi");
+    const regex = new RegExp(`(${escapedKeyword})`, "gi");
+    
+    return text.replace(regex, '<mark class="bg-yellow-200 text-black px-0.5">$1</mark>');
+  };
 
-    let match;
-    let result = text;
-
-    while ((match = regex.exec(text)) !== null) {
-      const startPos = match.index;
-      const endPos = regex.lastIndex;
-      const highlighted = `<mark>${text.substring(startPos, endPos)}</mark>`;
-      result =
-        result.substring(0, startPos) + highlighted + result.substring(endPos);
-    }
-
-    return result;
+  const handleProductClick = (product) => {
+    router.push(
+      `/product?product_id=${product?._id}&product_title=${product?.title
+        .replace(/ /g, "-")
+        .toLowerCase()}`
+    );
+    setIsOpen(false);
+    setSearchTerm("");
   };
 
   return (
-    <>
-      <button
-        className="p-2 rounded-secondary hover:bg-slate-100 transition-colors"
-        onClick={() => setOpen(!open)}
-      >
-        <Search className="h-6 w-6" />
-      </button>
-
-      <Modal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        className="lg:w-1/3 md:w-3/4 w-full h-96 md:mx-0 mx-4 !z-[9999] bg-white p-8 drop-shadow-2xl"
-      >
-        <div className="flex flex-col gap-y-4 h-full">
+    <div ref={searchRef} className="relative">
+      {/* Search Input with Icon on Left */}
+      <div className="flex items-center gap-2">
+        {/* Search Icon - Outside */}
+        <div className="flex-shrink-0">
+          <Search className="h-5 w-5 text-gray-600" />
+        </div>
+        
+        {/* Input */}
+        <div className="relative flex-1">
           <input
-            type="search"
-            name="search"
-            id="search"
-            placeholder="🔎 Type any product's title or keyword..."
-            className="!rounded w-full text-center"
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
             onChange={handleSearch}
+            onFocus={() => setIsOpen(true)}
+            className="w-64 lg:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
-          <div className="flex flex-row items-center gap-x-2 text-xs">
-            <hr className="flex-1" />
-            Your Search Results
-            <hr className="flex-1" />
-          </div>
-          <div className="overflow-y-auto scrollbar-hide flex flex-col gap-y-8 h-full">
-            {filteredProducts?.length === 0 ? (
-              <p className="text-sm flex flex-row gap-x-1 items-center justify-center">
-                <Inform /> No Products Found!
-              </p>
-            ) : (
-              <>
-                {productsLoading ? (
+          
+          {/* Clear button */}
+          {searchTerm && (
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setIsOpen(false);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Search Results Dropdown */}
+      {isOpen && (
+        <div className="absolute top-full mt-2 w-full lg:w-[32rem] right-0 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-[32rem] overflow-hidden z-[100]">
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-700">
+                {searchTerm ? (
                   <>
-                    {[1, 2, 3, 4].map((_, index) => (
-                      <SearchCard key={index} />
-                    ))}
+                    {filteredProducts.length} result{filteredProducts.length !== 1 ? 's' : ''} for "<span className="text-blue-600">{searchTerm}</span>"
                   </>
                 ) : (
-                  <>
-                    {filteredProducts?.map((product) => {
-                      const highlightedTitle = highlightMatch(
-                        product?.title,
-                        searchTerm
-                      );
-                      const highlightedSummary = highlightMatch(
-                        product?.summary,
-                        searchTerm
-                      );
-
-                      return (
-                        <div
-                          key={product?._id}
-                          className="flex flex-row gap-x-2 cursor-pointer"
-                          onClick={() =>
-                            router.push(
-                              `/product?product_id=${
-                                product?._id
-                              }&product_title=${product?.title
-                                .replace(/ /g, "-")
-                                .toLowerCase()}}`
-                            )
-                          }
-                        >
-                          <Image
-                            src={product?.thumbnail?.url}
-                            alt={product?.thumbnail?.public_id}
-                            width={50}
-                            height={50}
-                            className="rounded h-[50px] w-[50px] object-cover"
-                          />
-                          <article className="flex flex-col gap-y-2">
-                            <div className="flex flex-col gap-y-0.5">
-                              <h2
-                                className="text-base"
-                                dangerouslySetInnerHTML={{
-                                  __html: highlightedTitle,
-                                }}
-                              />
-                              <p
-                                className="text-xs line-clamp-2"
-                                dangerouslySetInnerHTML={{
-                                  __html: highlightedSummary,
-                                }}
-                              />
-                            </div>
-                            <div className="flex flex-row justify-between gap-x-4 items-center">
-                              <span className="text-xs flex flex-row items-baseline">
-                                $
-                                <span className="text-sm text-black">
-                                  {product?.price}.00
-                                </span>
-                              </span>
-                              <div className="flex flex-row gap-x-1">
-                                <span className="whitespace-nowrap text-[10px] bg-purple-300/50 text-purple-500 border border-purple-500 px-1.5 rounded">
-                                  {product?.store?.title}
-                                </span>
-                                <span className="whitespace-nowrap text-[10px] bg-indigo-300/50 text-indigo-500 border border-indigo-500 px-1.5 rounded">
-                                  {product?.brand?.title}
-                                </span>
-                                <span className="whitespace-nowrap text-[10px] bg-blue-300/50 text-blue-500 border border-blue-500 px-1.5 rounded">
-                                  {product?.category?.title}
-                                </span>
-                              </div>
-                            </div>
-                          </article>
-                        </div>
-                      );
-                    })}
-                  </>
+                  "Start typing to search..."
                 )}
-              </>
+              </p>
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  setSearchTerm("");
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Results */}
+          <div className="overflow-y-auto max-h-[28rem] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {!searchTerm ? (
+              <div className="px-4 py-12 text-center">
+                <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">Type to search for products...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="px-4 py-12 text-center">
+                <Inform className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm text-gray-900 font-medium mb-1">No products found</p>
+                <p className="text-xs text-gray-500">Try different keywords or check spelling</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {filteredProducts.slice(0, 20).map((product) => (
+                  <div
+                    key={product?._id}
+                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors group"
+                    onClick={() => handleProductClick(product)}
+                  >
+                    <div className="flex gap-3">
+                      {/* Product Image */}
+                      <div className="flex-shrink-0">
+                        <Image
+                          src={product?.thumbnail?.url}
+                          alt={product?.title}
+                          width={60}
+                          height={60}
+                          className="rounded-lg h-16 w-16 object-cover border border-gray-200 group-hover:border-blue-300 transition-colors"
+                        />
+                      </div>
+                      
+                      {/* Product Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors mb-1 line-clamp-1"
+                          dangerouslySetInnerHTML={{
+                            __html: highlightMatch(product?.title, searchTerm),
+                          }}
+                        />
+                        <p
+                          className="text-xs text-gray-600 line-clamp-2 mb-2"
+                          dangerouslySetInnerHTML={{
+                            __html: highlightMatch(product?.summary, searchTerm),
+                          }}
+                        />
+                        
+                        {/* Tags and Price */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-wrap gap-1">
+                            {product?.brand && (
+                              <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
+                                {product?.brand?.title}
+                              </span>
+                            )}
+                            {product?.category && (
+                              <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                                {product?.category?.title}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-sm font-bold text-gray-900">
+                            ${product?.price}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
+
+          {/* Footer - View All Results */}
+          {filteredProducts.length > 20 && (
+            <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={() => {
+                  router.push(`/collections/all?search=${encodeURIComponent(searchTerm)}`);
+                  setIsOpen(false);
+                  setSearchTerm("");
+                }}
+                className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                View all {filteredProducts.length} results →
+              </button>
+            </div>
+          )}
         </div>
-      </Modal>
-    </>
+      )}
+    </div>
   );
 };
 

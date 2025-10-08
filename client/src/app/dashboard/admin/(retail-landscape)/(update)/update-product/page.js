@@ -4,6 +4,7 @@ import { useUpdateProductMutation, useGetProductQuery } from "@/services/product
 import { useGetBrandsQuery } from "@/services/brand/brandApi";
 import { useGetCategoriesQuery } from "@/services/category/categoryApi";
 import { useGetStoresQuery } from "@/services/store/storeApi";
+import { useGetSectionsQuery } from "@/services/section/sectionApi"; // ADD THIS
 import Dashboard from "@/components/shared/layouts/Dashboard";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
@@ -34,7 +35,7 @@ function UpdateProduct({ productId }) {
   const [galleryPreviews, setGalleryPreviews] = useState([]);
   const [features, setFeatures] = useState([{ title: "", content: [""] }]);
   const router = useRouter();
-  const [selectedColors, setSelectedColors] = useState([]);
+  const [selectedColors, setSelectedColors] = useState([]); // Will store color objects with images
   const [colorSearch, setColorSearch] = useState("");
   const [customAttributes, setCustomAttributes] = useState([{ name: "", value: "", unit: "" }]);
   const [socialLinks, setSocialLinks] = useState([{ name: "", url: "" }]);
@@ -72,10 +73,12 @@ function UpdateProduct({ productId }) {
   const { data: brandsData } = useGetBrandsQuery();
   const { data: categoriesData } = useGetCategoriesQuery();
   const { data: storesData } = useGetStoresQuery();
+  const { data: sectionsData } = useGetSectionsQuery(); // ADD THIS
 
   const brands = useMemo(() => brandsData?.data || [], [brandsData]);
   const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
   const stores = useMemo(() => storesData?.data || [], [storesData]);
+  const sections = useMemo(() => sectionsData?.data || [], [sectionsData]); // ADD THIS
   const product = useMemo(() => productData?.data || {}, [productData]);
 
   // Load existing product data
@@ -118,12 +121,18 @@ function UpdateProduct({ productId }) {
         enableStore: product.enableStore,
       });
       
-      // COLORS: Load from the new colors array format
-      if (product.colors && Array.isArray(product.colors) && product.colors.length > 0) {
-        setSelectedColors(product.colors);
-        console.log('Loaded colors:', product.colors);
-      } else {
-        setSelectedColors([]);
+      // Load colors with their images
+      if (product?.colors && Array.isArray(product.colors)) {
+        setSelectedColors(product.colors.map(color => ({
+          name: color.name,
+          hex: color.hex,
+          theme: color.theme,
+          group: color.group,
+          rgb: color.rgb,
+          image: null, // File object (won't have on load)
+          imagePreview: color.image?.url || null, // Existing image URL
+          existingImage: color.image || null, // Store existing image data
+        })));
       }
       
       // CUSTOM ATTRIBUTES: Load from variations.customAttributes
@@ -326,11 +335,46 @@ function UpdateProduct({ productId }) {
   };
 
   const handleColorToggle = (color) => {
-    setSelectedColors(prev => 
-      prev.includes(color.name) 
-        ? prev.filter(c => c !== color.name)
-        : [...prev, color.name]
-    );
+    setSelectedColors(prev => {
+      const exists = prev.some(c => c.name === color.name);
+      if (exists) {
+        return prev.filter(c => c.name !== color.name);
+      } else {
+        return [...prev, {
+          name: color.name,
+          hex: color.hex,
+          theme: color.theme,
+          group: color.group,
+          rgb: color.rgb,
+          image: null,
+          imagePreview: null,
+          existingImage: null,
+        }];
+      }
+    });
+  };
+
+  // Add color image handlers (same as add product form)
+  const handleColorImageUpload = (colorName, file) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedColors(prev => prev.map(color => 
+          color.name === colorName 
+            ? { ...color, image: file, imagePreview: reader.result, existingImage: null }
+            : color
+        ));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveColorImage = (colorName) => {
+    setSelectedColors(prev => prev.map(color => 
+      color.name === colorName 
+        ? { ...color, image: null, imagePreview: null, existingImage: null }
+        : color
+    ));
   };
 
   // Custom attribute handlers
@@ -403,9 +447,34 @@ function UpdateProduct({ productId }) {
     
     formData.append("features", JSON.stringify(validFeatures));
     
+    const validCustomAttributes = enableCustomSpecs ? customAttributes.filter(attr => attr.name && attr.value) || [] : [];
+
+    // Handle colors with images
+    const colorObjects = enableColors
+      ? selectedColors.map((colorObj) => ({
+          name: colorObj.name,
+          theme: colorObj.theme,
+          group: colorObj.group,
+          hex: colorObj.hex,
+          rgb: colorObj.rgb,
+          // Keep existing image if no new image uploaded
+          ...(colorObj.existingImage && !colorObj.image ? { image: colorObj.existingImage } : {})
+        }))
+      : [];
+
+    // Append new color images
+    if (enableColors) {
+      selectedColors.forEach((colorObj) => {
+        if (colorObj.image) {
+          formData.append(`colorImages`, colorObj.image);
+          formData.append(`colorImageNames`, colorObj.name);
+        }
+      });
+    }
+
     const validVariations = {
-      colors: enableColors ? selectedColors || [] : [],  // Only send colors if enabled
-      customAttributes: enableCustomSpecs ? customAttributes.filter(attr => attr.name && attr.value) || [] : [],  // Only send custom attributes if enabled
+      colors: colorObjects,
+      customAttributes: validCustomAttributes,
     };
     
     formData.append("variations", JSON.stringify(validVariations));
@@ -470,7 +539,7 @@ function UpdateProduct({ productId }) {
             onClick={() => handleColorToggle(color)}
             className={`
               flex flex-col items-center p-2 rounded-lg cursor-pointer border-2 transition-all
-              ${selectedColors.includes(color.name) 
+              ${selectedColors.some(c => c.name === color.name) 
                 ? 'border-blue-500 bg-blue-50' 
                 : 'border-gray-200 hover:border-gray-300'
               }
@@ -483,7 +552,7 @@ function UpdateProduct({ productId }) {
             <span className="text-xs mt-1 text-center line-clamp-1" title={color.name}>
               {color.name}
             </span>
-            {selectedColors.includes(color.name) && (
+            {selectedColors.some(c => c.name === color.name) && (
               <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center mt-1">
                 <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -786,55 +855,84 @@ function UpdateProduct({ productId }) {
               />
             </div>
 
-            {/* Selected Colors */}
-            {selectedColors.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium">Selected Colors:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedColors.map((color, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center space-x-2 bg-gray-100 rounded-lg px-3 py-1"
-                    >
-                      <div
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: `#${color.hex}` }}
-                      ></div>
-                      <span className="text-sm">{color.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedColors(prev => prev.filter((_, i) => i !== index))}
-                        className="text-red-500 hover:text-red-700 text-sm"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Color grid */}
+            {colorGrid}
+          </div>
+        )}
 
-            {/* Available Colors */}
-            <div className="grid grid-cols-8 md:grid-cols-12 lg:grid-cols-16 gap-2 max-h-48 overflow-y-auto">
-              {filteredColors.map((color, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  className={`w-8 h-8 rounded-full border-2 hover:scale-110 transition-transform ${
-                    selectedColors.some(c => c.name === color.name)
-                      ? 'border-blue-500 shadow-lg'
-                      : 'border-gray-300'
-                  }`}
-                  style={{ backgroundColor: `#${color.hex}` }}
-                  onClick={() => {
-                    if (selectedColors.some(c => c.name === color.name)) {
-                      setSelectedColors(prev => prev.filter(c => c.name !== color.name));
-                    } else {
-                      setSelectedColors(prev => [...prev, color]);
-                    }
-                  }}
-                  title={color.name}
-                />
+        {/* Selected Colors with Image Upload */}
+        {selectedColors.length > 0 && (
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-medium text-gray-900 mb-4">Selected Colors ({selectedColors.length})</h4>
+            <div className="space-y-4">
+              {selectedColors.map((color, index) => (
+                <div key={color.name} className="bg-white p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-start gap-4">
+                    {/* Color Info */}
+                    <div className="flex items-center gap-3 flex-1">
+                      <div
+                        className="w-12 h-12 rounded-lg border-2 border-gray-300 shadow-sm flex-shrink-0"
+                        style={{ backgroundColor: `#${color.hex}` }}
+                      />
+                      <div>
+                        <div className="font-medium text-gray-900">{color.name}</div>
+                        <div className="text-xs text-gray-500">#{color.hex}</div>
+                      </div>
+                    </div>
+
+                    {/* Image Upload */}
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Color Image (Optional)
+                      </label>
+                      {color.imagePreview ? (
+                        <div className="relative w-full h-32 rounded-lg overflow-hidden border-2 border-gray-200">
+                          <img
+                            src={color.imagePreview}
+                            alt={color.name}
+                            className="w-full h-full object-contain bg-gray-50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveColorImage(color.name)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-lg"
+                          >
+                            ×
+                          </button>
+                          {color.existingImage && !color.image && (
+                            <div className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                              Current
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleColorImageUpload(color.name, e.target.files[0])}
+                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                          />
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Upload product image in {color.name} color
+                      </p>
+                    </div>
+
+                    {/* Remove Color Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleColorToggle(color)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Remove color"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -1151,13 +1249,13 @@ function UpdateProduct({ productId }) {
         </div>
       </div>
 
-      {/* Product Status Section - FIXED */}
+      {/* Product Status - Multiple Selection - NOW DYNAMIC */}
       <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
-        <h3 className="text-lg font-semibold">Product Status (Multiple Selection)</h3>
-        <p className="text-sm text-gray-600">Select one or more statuses for this product</p>
+        <h3 className="text-lg font-semibold">Product Sections (Multiple Selection)</h3>
+        <p className="text-sm text-gray-600">Select one or more sections where this product should appear</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Regular */}
+          {/* Regular - Always show */}
           <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
             <input
               type="checkbox"
@@ -1172,70 +1270,51 @@ function UpdateProduct({ productId }) {
               className="rounded text-gray-500 focus:ring-gray-500"
             />
             <div className="flex-1">
-              <div className="font-semibold text-gray-900">Regular Product</div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📦</span>
+                <div className="font-semibold text-gray-900">Regular Product</div>
+              </div>
               <div className="text-sm text-gray-600">Standard product listing</div>
             </div>
           </label>
 
-          {/* Featured */}
-          <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-blue-50">
-            <input
-              type="checkbox"
-              checked={selectedProductStatus.includes("featured")}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setSelectedProductStatus(prev => [...prev, "featured"]);
-                } else {
-                  setSelectedProductStatus(prev => prev.filter(status => status !== "featured"));
-                }
-              }}
-              className="rounded text-blue-500 focus:ring-blue-500"
-            />
-            <div className="flex-1">
-              <div className="font-semibold text-gray-900">Featured Product</div>
-              <div className="text-sm text-gray-600">Highlighted in featured section</div>
-            </div>
-          </label>
-
-          {/* Trending */}
-          <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-green-50">
-            <input
-              type="checkbox"
-              checked={selectedProductStatus.includes("trending")}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setSelectedProductStatus(prev => [...prev, "trending"]);
-                } else {
-                  setSelectedProductStatus(prev => prev.filter(status => status !== "trending"));
-                }
-              }}
-              className="rounded text-green-500 focus:ring-green-500"
-            />
-            <div className="flex-1">
-              <div className="font-semibold text-gray-900">Trending Product</div>
-              <div className="text-sm text-gray-600">Popular and trending item</div>
-            </div>
-          </label>
-
-          {/* Best Seller */}
-          <label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-red-50">
-            <input
-              type="checkbox"
-              checked={selectedProductStatus.includes("best-seller")}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setSelectedProductStatus(prev => [...prev, "best-seller"]);
-                } else {
-                  setSelectedProductStatus(prev => prev.filter(status => status !== "best-seller"));
-                }
-              }}
-              className="rounded text-red-500 focus:ring-red-500"
-            />
-            <div className="flex-1">
-              <div className="font-semibold text-gray-900">Best Seller</div>
-              <div className="text-sm text-gray-600">Top performing product</div>
-            </div>
-          </label>
+          {/* Dynamic sections from database */}
+          {sections
+            .filter(section => section.filterKey !== "seasonal") // Seasonal handled separately
+            .sort((a, b) => a.order - b.order)
+            .map(section => (
+              <label 
+                key={section._id} 
+                className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-opacity-10"
+                style={{ 
+                  borderColor: selectedProductStatus.includes(section.filterKey) ? section.color : '#e5e7eb',
+                  backgroundColor: selectedProductStatus.includes(section.filterKey) ? `${section.color}10` : 'transparent'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedProductStatus.includes(section.filterKey)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedProductStatus(prev => [...prev, section.filterKey]);
+                    } else {
+                      setSelectedProductStatus(prev => prev.filter(status => status !== section.filterKey));
+                    }
+                  }}
+                  style={{ accentColor: section.color }}
+                  className="rounded focus:ring-2"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{section.icon}</span>
+                    <div className="font-semibold text-gray-900">{section.displayName}</div>
+                  </div>
+                  {section.description && (
+                    <div className="text-sm text-gray-600">{section.description}</div>
+                  )}
+                </div>
+              </label>
+            ))}
         </div>
       </div>
 

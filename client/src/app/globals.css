@@ -157,3 +157,14 @@ select {
 section {
   position: relative;
 }
+/* Mobile Bottom Navigation Support */
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: 4rem !important;
+  }
+  
+  /* Ensure content doesn't hide behind bottom nav */
+  footer {
+    margin-bottom: 1rem;
+  }
+}
