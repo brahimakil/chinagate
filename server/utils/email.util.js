@@ -1,10 +1,10 @@
 /**
- * Email utility for sending password reset emails
+ * Email utility for sending emails
  */
 
 const nodemailer = require("nodemailer");
 
-// Create transporter (Fixed: createTransport not createTransporter)
+// Create transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -12,6 +12,18 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
+
+// Generic send email function
+exports.sendEmail = async ({ to, subject, html }) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: to,
+    subject: subject,
+    html: html,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
 
 // Send password reset email
 exports.sendPasswordResetEmail = async (email, resetToken) => {

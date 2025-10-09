@@ -7,7 +7,7 @@ const systemApi = canimApi.injectEndpoints({
         url: "/system/get-settings",
         method: "GET",
       }),
-      providesTags: ["User"], // reuse tags; not critical here
+      providesTags: ["System"],
     }),
     updateSystemSettings: builder.mutation({
       query: (body) => ({
@@ -18,7 +18,7 @@ const systemApi = canimApi.injectEndpoints({
         },
         body,
       }),
-      invalidatesTags: ["User"],
+      invalidatesTags: ["System"],
     }),
   }),
 });

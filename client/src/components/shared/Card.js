@@ -211,12 +211,29 @@ const Card = ({ index, product, ...rest }) => {
             </span>
           </div>
         )}
+
+        {/* Stock Status */}
+        <div className="mt-3">
+          {product?.stock > 0 ? (
+            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+              {product.stock} in stock
+            </div>
+          ) : (
+            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+              <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+              Out of Stock
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 function AddToFavorite({ product }) {
+  const user = useSelector((state) => state?.auth?.user);
+  const router = useRouter();
   const [addToFavorite, { isLoading, data, error }] = useAddToFavoriteMutation();
 
   useEffect(() => {
@@ -226,18 +243,113 @@ function AddToFavorite({ product }) {
     if (data) {
       toast.success(data?.description, { id: "addToFavorite" });
     }
-    if (error?.data) {
-      toast.error(error?.data?.description, { id: "addToFavorite" });
+    if (error) {
+      if (error?.status === 401) {
+        toast.error(
+          (t) => (
+            <div className="flex flex-col gap-3 p-2">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center shadow-lg">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-gray-900 text-base mb-1">Sign In Required</div>
+                  <div className="text-sm text-gray-600">Please sign in to save your favorite items</div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  router.push("/auth");
+                }}
+                className="w-full bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                Sign In to Continue
+              </button>
+            </div>
+          ),
+          { 
+            id: "addToFavorite",
+            duration: 8000,
+            style: {
+              minWidth: "320px",
+              maxWidth: "400px",
+              background: "white",
+              padding: "8px",
+              borderRadius: "16px",
+              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.15)",
+              border: "1px solid rgba(0, 0, 0, 0.05)"
+            },
+            icon: null,
+          }
+        );
+      } else if (error?.data) {
+        toast.error(error?.data?.description, { id: "addToFavorite" });
+      }
     }
-  }, [isLoading, data, error]);
+  }, [isLoading, data, error, router]);
+
+  const handleAddToFavorite = (e) => {
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error(
+        (t) => (
+          <div className="flex flex-col gap-3 p-2">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center shadow-lg">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-gray-900 text-base mb-1">Sign In Required</div>
+                <div className="text-sm text-gray-600">Please sign in to save your favorite items</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                router.push("/auth");
+              }}
+              className="w-full bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Sign In to Continue
+            </button>
+          </div>
+        ),
+        { 
+          duration: 8000,
+          style: {
+            minWidth: "320px",
+            maxWidth: "400px",
+            background: "white",
+            padding: "8px",
+            borderRadius: "16px",
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.15)",
+            border: "1px solid rgba(0, 0, 0, 0.05)"
+          },
+          icon: null,
+        }
+      );
+      return;
+    }
+    
+    addToFavorite({ product: product?._id });
+  };
 
   return (
     <button
       className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md hover:bg-white transition-all"
-      onClick={(e) => {
-        e.stopPropagation();
-        addToFavorite({ product: product?._id });
-      }}
+      onClick={handleAddToFavorite}
     >
       {isLoading ? (
         <Spinner />

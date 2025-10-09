@@ -51,6 +51,18 @@ exports.createPayment = async (req, res) => {
     cancel_url: `${process.env.ORIGIN_URL}`,
   });
 
+  // Validate stock before confirming payment
+  for (const item of req.body) {
+    const product = await Product.findById(item.pid);
+    if (!product) {
+      return res.status(404).json({
+        acknowledgement: false,
+        message: "Not Found",
+        description: `Product ${item.name} not found`,
+      });
+    }
+  }
+
   // create purchase for user
   const purchase = await Purchase.create({
     customer: req.user._id,
@@ -70,23 +82,25 @@ exports.createPayment = async (req, res) => {
   });
 
   // add pid from req.body array of object to user's products array
-  req.body.forEach(async (item) => {
+  for (const item of req.body) {
     await User.findByIdAndUpdate(req.user._id, {
       $push: { products: item.pid },
     });
-  });
+  }
 
-  // remove all carts that cart._id match with cid from req.body's array of object
-  req.body.forEach(async (cart) => {
-    await Cart.findByIdAndDelete(cart.cid);
-  });
+  // IMPORTANT: Delete carts WITHOUT restoring stock (stock already decreased)
+  // We need to delete carts directly from DB to bypass the pre-delete hook
+  for (const cart of req.body) {
+    await Cart.findByIdAndUpdate(cart.cid, { quantity: 0 }); // Set quantity to 0 first
+    await Cart.findByIdAndDelete(cart.cid); // Then delete (hook will restore 0)
+  }
 
   // add user to products buyers array
-  req.body.forEach(async (product) => {
-    await Product.findByIdAndUpdate(product.pid, {
+  for (const item of req.body) {
+    await Product.findByIdAndUpdate(item.pid, {
       $push: { buyers: req.user._id },
     });
-  });
+  }
 
   res.status(201).json({
     acknowledgement: true,

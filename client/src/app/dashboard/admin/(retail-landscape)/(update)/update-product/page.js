@@ -622,24 +622,87 @@ function UpdateProduct({ productId }) {
           />
         </label>
 
-        {/* Stock Field - NEW */}
-        <label htmlFor="stock" className="w-full flex flex-col gap-y-1">
-          <span className="text-sm">Stock Quantity*</span>
-          <input
-            type="number"
-            name="stock"
-            id="stock"
-            value={productStock}
-            onChange={(e) => setProductStock(Number(e.target.value))}
-            placeholder="i.e. 100"
-            min="0"
-            required
-            className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <span className="text-xs text-gray-600">
-            Current stock: {productStock}. Set to 0 to mark as out of stock.
-          </span>
-        </label>
+        {/* Stock Management - IMPROVED */}
+        <div className="w-full flex flex-col gap-y-3">
+          <span className="text-sm font-medium">Stock Management</span>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm text-gray-700">Current Stock in System</p>
+                <p className="text-3xl font-bold text-blue-600">{product.stock || 0}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-600">After Update</p>
+                <p className="text-2xl font-semibold text-green-600">
+                  {(product.stock || 0) + (productStock || 0)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-y-2">
+            <label htmlFor="stockChange" className="text-sm text-gray-700">
+              Add or Remove Stock
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setProductStock(Math.max(-product.stock, productStock - 10))}
+                className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium"
+              >
+                -10
+              </button>
+              <button
+                type="button"
+                onClick={() => setProductStock(Math.max(-product.stock, productStock - 1))}
+                className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium"
+              >
+                -1
+              </button>
+              <input
+                type="number"
+                id="stockChange"
+                value={productStock}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  // Don't allow going below negative current stock
+                  if ((product.stock || 0) + value >= 0) {
+                    setProductStock(value);
+                  }
+                }}
+                className="flex-1 p-3 border border-gray-300 rounded-lg text-center font-semibold text-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+              />
+              <button
+                type="button"
+                onClick={() => setProductStock(productStock + 1)}
+                className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-medium"
+              >
+                +1
+              </button>
+              <button
+                type="button"
+                onClick={() => setProductStock(productStock + 10)}
+                className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-medium"
+              >
+                +10
+              </button>
+            </div>
+            <div className="flex justify-between items-center text-xs text-gray-600 mt-1">
+              <span>
+                {productStock > 0 ? `📈 Adding ${productStock} units` : productStock < 0 ? `📉 Removing ${Math.abs(productStock)} units` : '➡️ No change'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setProductStock(0)}
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Images */}

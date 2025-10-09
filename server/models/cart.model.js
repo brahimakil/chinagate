@@ -38,6 +38,13 @@ const cartSchema = new mongoose.Schema(
       default: 1,
     },
 
+    // Auto-expire cart items after 20 minutes
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + 20 * 60 * 1000), // 20 minutes from now
+      index: { expires: 0 }, // TTL index - MongoDB will auto-delete when expiresAt is reached
+    },
+
     // for user account time stamps
     createdAt: {
       type: Date,
@@ -51,8 +58,77 @@ const cartSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Pre-delete hook to restore stock when cart item is removed
+cartSchema.pre('findOneAndDelete', async function(next) {
+  try {
+    const Product = require("./product.model");
+    const cart = await this.model.findOne(this.getFilter());
+    
+    if (cart) {
+      // Restore stock when cart item is deleted
+      await Product.findByIdAndUpdate(cart.product, {
+        $inc: { stock: cart.quantity }
+      });
+      
+      console.log(`✅ Stock restored: ${cart.quantity} units for product ${cart.product}`);
+    }
+    
+    next();
+  } catch (error) {
+    console.error("❌ Error restoring stock on cart deletion:", error);
+    next(error);
+  }
+});
+
 /* create cart schema */
 const Cart = mongoose.model("Cart", cartSchema);
+
+// Background job to clean up expired carts and restore stock
+// Runs every 5 minutes to check for expired items
+const cleanupExpiredCarts = async () => {
+  try {
+    const Product = require("./product.model");
+    const User = require("./user.model");
+    
+    // Find all expired cart items
+    const expiredCarts = await Cart.find({
+      expiresAt: { $lte: new Date() }
+    });
+
+    if (expiredCarts.length > 0) {
+      console.log(`🧹 Cleaning up ${expiredCarts.length} expired cart items...`);
+
+      for (const cart of expiredCarts) {
+        // Restore stock
+        await Product.findByIdAndUpdate(cart.product, {
+          $inc: { stock: cart.quantity }
+        });
+
+        // Remove from user's cart array
+        await User.findByIdAndUpdate(cart.user, {
+          $pull: { cart: cart._id }
+        });
+
+        console.log(`✅ Restored ${cart.quantity} units to product ${cart.product}`);
+      }
+
+      // Delete expired carts
+      await Cart.deleteMany({
+        expiresAt: { $lte: new Date() }
+      });
+
+      console.log(`✅ Cleanup complete: ${expiredCarts.length} items processed`);
+    }
+  } catch (error) {
+    console.error("❌ Error during cart cleanup:", error);
+  }
+};
+
+// Run cleanup every 5 minutes
+setInterval(cleanupExpiredCarts, 5 * 60 * 1000);
+
+// Also run on startup
+setTimeout(cleanupExpiredCarts, 5000); // Wait 5 seconds after server starts
 
 /* export cart schema */
 module.exports = Cart;

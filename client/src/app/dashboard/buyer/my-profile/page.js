@@ -74,12 +74,12 @@ const Page = () => {
       email: event.target.email.value,
       phone: event.target.phone.value,
       address: event.target.address.value,
-      role: event.target.role.value,
+      role: user.role, // Use existing role from user data
     };
 
     // Add 'status' property for seller
     if (updatedUser.role === "seller") {
-      updatedUser.status = "inactive";
+      updatedUser.status = user.status || "inactive";
     }
 
     // If avatarPreview is available, add it to the formData

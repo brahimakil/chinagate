@@ -58,6 +58,7 @@ exports.getSettings = async (req, res) => {
 exports.updateSettings = async (req, res) => {
   const { 
     whatsappNumber,
+    deliveryTax,
     // Home page
     homePageOverlayColor, homePageTextColor, homePageBadge, homePageTitle, homePageSubtitle, homePageDescription,
     // Categories page
@@ -79,6 +80,11 @@ exports.updateSettings = async (req, res) => {
 
   // Update WhatsApp
   settings.whatsappNumber = whatsappNumber || "";
+  
+  // Update Delivery Tax
+  if (deliveryTax !== undefined) {
+    settings.deliveryTax = parseFloat(deliveryTax) || 0;
+  }
 
   // Helper function to update banner
   const updateBanner = async (bannerField, imageFieldName, overlayColor, textColor, badge, title, subtitle, description) => {

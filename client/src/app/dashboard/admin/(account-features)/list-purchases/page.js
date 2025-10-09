@@ -24,6 +24,7 @@ import {
   useGetAllPurchasesQuery,
   useUpdatePurchaseStatusMutation,
 } from "@/services/purchase/purchaseApi";
+import { useGetSystemSettingsQuery, useUpdateSystemSettingsMutation } from "@/services/system/systemApi";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
@@ -35,6 +36,16 @@ const Page = () => {
   const purchases = useMemo(() => data?.data || [], [data]);
   const [filter, setFilter] = useState("all");
   const dispatch = useDispatch();
+  
+  const { data: settingsData } = useGetSystemSettingsQuery();
+  const [updateSettings, { isLoading: isUpdating }] = useUpdateSystemSettingsMutation();
+  const [deliveryTax, setDeliveryTax] = useState(0);
+
+  useEffect(() => {
+    if (settingsData?.data?.deliveryTax !== undefined) {
+      setDeliveryTax(settingsData.data.deliveryTax);
+    }
+  }, [settingsData]);
 
   const filteredPurchases = useMemo(() => {
     if (filter === "all") {
@@ -43,6 +54,8 @@ const Page = () => {
       return purchases.filter((purchase) => purchase?.status === "pending");
     } else if (filter === "delivered") {
       return purchases.filter((purchase) => purchase?.status === "delivered");
+    } else if (filter === "cancelled") {
+      return purchases.filter((purchase) => purchase?.status === "cancelled");
     }
   }, [purchases, filter]);
 
@@ -62,8 +75,48 @@ const Page = () => {
     dispatch(setPurchases(purchases));
   }, [isLoading, data, error, dispatch, purchases]);
 
+  const handleUpdateDeliveryTax = async () => {
+    try {
+      await updateSettings({ deliveryTax: parseFloat(deliveryTax) }).unwrap();
+      toast.success("Delivery tax updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update delivery tax");
+    }
+  };
+
   return (
     <Dashboard>
+      {/* Delivery Tax Settings */}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-xl font-bold mb-4">Delivery Tax Settings</h2>
+        <div className="flex items-center gap-4">
+          <div className="flex-1 max-w-xs">
+            <label className="block text-sm font-medium mb-2">
+              Delivery Tax Amount ($)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={deliveryTax}
+              onChange={(e) => setDeliveryTax(e.target.value)}
+              className="w-full border rounded px-3 py-2"
+              placeholder="0.00"
+            />
+          </div>
+          <button
+            onClick={handleUpdateDeliveryTax}
+            disabled={isUpdating}
+            className="mt-6 bg-black text-white px-6 py-2 rounded hover:bg-gray-800 disabled:opacity-50"
+          >
+            {isUpdating ? "Updating..." : "Update Tax"}
+          </button>
+        </div>
+        <p className="text-sm text-gray-600 mt-2">
+          💡 This tax will be applied to all new orders. Existing orders will keep their original tax amount.
+        </p>
+      </div>
+
       {filteredPurchases?.length === 0 ? (
         <p className="text-sm flex flex-row gap-x-1 items-center justify-center">
           <Inform /> No Purchases Found!
@@ -97,6 +150,15 @@ const Page = () => {
               onClick={() => setFilter("delivered")}
             >
               Delivered
+            </button>
+            <button
+              type="button"
+              className={`text-sm bg-gray-50 border border-gray-900 rounded-secondary text-gray-900 px-4 py-1 ${
+                filter === "cancelled" && "bg-gray-900 !text-white"
+              }`}
+              onClick={() => setFilter("cancelled")}
+            >
+              Cancelled
             </button>
           </div>
           <div className="overflow-x-auto w-full">
@@ -154,11 +216,14 @@ const Page = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredPurchases.map((purchase) => (
-                  <tr
-                    key={purchase?._id}
-                    className="odd:bg-white even:bg-gray-100 hover:odd:bg-gray-100"
-                  >
+                {filteredPurchases
+                  .slice()
+                  .reverse()
+                  .map((purchase) => (
+                    <tr
+                      key={purchase?._id}
+                      className="odd:bg-white even:bg-gray-100 hover:odd:bg-gray-100"
+                    >
                     <td className="px-6 py-4">
                       <span className="whitespace-nowrap w-60 overflow-x-auto block scrollbar-hide text-sm">
                         {purchase?.customerId}
@@ -185,7 +250,7 @@ const Page = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="whitespace-nowrap scrollbar-hide text-sm">
-                        {purchase?.totalAmount / 100}
+                        ${purchase?.totalAmount.toFixed(2)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -199,6 +264,11 @@ const Page = () => {
                           {purchase?.status}
                         </span>
                       )}
+                      {purchase?.status === "cancelled" && (
+                        <span className="bg-gray-50 border border-gray-900 px-2 rounded-secondary text-gray-900 text-xs uppercase">
+                          {purchase?.status}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <ModifyStatus
@@ -207,7 +277,12 @@ const Page = () => {
                       />
                     </td>
                     <td className="px-6 py-4">
-                      <ViewProducts products={purchase?.products} />
+                      <ViewProducts 
+                        products={purchase?.products}
+                        subtotal={purchase?.subtotal}
+                        deliveryTax={purchase?.deliveryTax}
+                        totalAmount={purchase?.totalAmount}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -245,14 +320,16 @@ function ModifyStatus({ id, status }) {
       onChange={(e) =>
         updatePurchaseStatus({ id: id, body: { status: e.target.value } })
       }
+      disabled={status === "cancelled" || status === "delivered"}
     >
       <option value="pending">Pending</option>
       <option value="delivered">Delivered</option>
+      <option value="cancelled">Cancelled</option>
     </select>
   );
 }
 
-function ViewProducts({ products }) {
+function ViewProducts({ products, subtotal, deliveryTax, totalAmount }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -269,11 +346,12 @@ function ViewProducts({ products }) {
         <Modal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
-          className="p-6 lg:w-1/3 md:w-3/4 w-full max-h-96 overflow-y-auto scrollbar-hide"
+          className="p-6 lg:w-1/2 md:w-3/4 w-full max-h-96 overflow-y-auto scrollbar-hide"
         >
           <div className="flex flex-col gap-y-4">
+            <h3 className="font-bold text-lg mb-2">Order Details</h3>
             {products?.map(({ product, quantity, _id }) => (
-              <div key={_id} className="flex flex-row gap-x-2 items-start">
+              <div key={_id} className="flex flex-row gap-x-2 items-start border-b pb-3">
                 <Image
                   src={product?.thumbnail?.url}
                   alt={product?.thumbnail?.public_id}
@@ -281,18 +359,31 @@ function ViewProducts({ products }) {
                   width={40}
                   className="w-[40px] h-[40px] object-cover rounded"
                 />
-                <div className="flex flex-col">
+                <div className="flex flex-col flex-1">
                   <p className="text-base line-clamp-1 font-semibold">
                     {product?.title}
                   </p>
                   <p className="text-sm line-clamp-2">{product?.summary}</p>
                   <p className="text-xs mt-2">
-                    QTY: {quantity} • Price: ${product?.price} • Total Price: $
-                    {product?.price * quantity}
+                    QTY: {quantity} × ${product?.price.toFixed(2)} = ${(product?.price * quantity).toFixed(2)}
                   </p>
                 </div>
               </div>
             ))}
+            <div className="border-t pt-3 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-semibold">Subtotal:</span>
+                <span>${(subtotal || 0).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-semibold">Delivery Tax:</span>
+                <span>${(deliveryTax || 0).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-base font-bold border-t pt-2">
+                <span>Total Amount:</span>
+                <span>${(totalAmount || 0).toFixed(2)}</span>
+              </div>
+            </div>
           </div>
         </Modal>
       )}

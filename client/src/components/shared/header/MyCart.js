@@ -19,16 +19,23 @@ import OutsideClick from "../OutsideClick";
 import Image from "next/image";
 import { useSelector } from "react-redux";
 import Trash from "@/components/icons/Trash";
-import { useDeleteFromCartMutation } from "@/services/cart/cartApi";
+import { useDeleteFromCartMutation, useUpdateCartMutation } from "@/services/cart/cartApi";
 import { toast } from "react-hot-toast";
 import Inform from "@/components/icons/Inform";
 import { useCreatePaymentMutation } from "@/services/payment/paymentApi";
+import { AiOutlineMinus, AiOutlinePlus } from "react-icons/ai";
+import { useRouter } from "next/navigation";
 
 const MyCart = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const [removeFromCart, { isLoading, data, error }] =
     useDeleteFromCartMutation();
+  
+  const [
+    updateCart,
+    { isLoading: isUpdating, data: updateData, error: updateError },
+  ] = useUpdateCartMutation();
 
   useEffect(() => {
     if (isLoading) {
@@ -43,6 +50,26 @@ const MyCart = () => {
       toast.error(error?.data?.description, { id: "removeFromCart" });
     }
   }, [isLoading, data, error]);
+
+  useEffect(() => {
+    if (isUpdating) {
+      toast.loading("Updating cart...", { id: "updateCart" });
+    }
+
+    if (updateData) {
+      toast.success(updateData?.description, { id: "updateCart" });
+    }
+
+    if (updateError?.data) {
+      toast.error(updateError?.data?.description, { id: "updateCart" });
+    }
+  }, [isUpdating, updateData, updateError]);
+
+  const handleUpdateQuantity = (cartId, currentQuantity, change) => {
+    const newQuantity = currentQuantity + change;
+    if (newQuantity < 1) return; // Don't allow 0 or negative
+    updateCart({ id: cartId, quantity: newQuantity });
+  };
 
   return (
     <>
@@ -70,19 +97,21 @@ const MyCart = () => {
             ) : (
               <div className="h-full w-full flex flex-col gap-y-4">
                 <div className="h-full overflow-y-auto scrollbar-hide">
-                  {user?.cart?.map(({ product, quantity, _id }) => (
-                    <div
-                      key={product?._id}
-                      className="flex flex-row gap-x-2 transition-all border border-transparent p-2 rounded hover:border-black group relative"
-                    >
-                      <Image
-                        src={product?.thumbnail?.url}
-                        alt={product?.thumbnail?.public_id}
-                        width={50}
-                        height={50}
-                        className="rounded h-[50px] w-[50px] object-cover"
-                      />
-                      <article className="flex flex-col gap-y-2">
+                  {user?.cart
+                    ?.filter((item) => item.product !== null) // Filter out items with deleted products
+                    .map(({ product, quantity, _id }) => (
+                      <div
+                        key={product?._id}
+                        className="flex flex-row gap-x-2 transition-all border border-transparent p-2 rounded hover:border-black group relative"
+                      >
+                        <Image
+                          src={product?.thumbnail?.url}
+                          alt={product?.thumbnail?.public_id}
+                          width={50}
+                          height={50}
+                          className="rounded h-[50px] w-[50px] object-cover"
+                        />
+                        <article className="flex flex-col gap-y-2 flex-1">
                         <div className="flex flex-col gap-y-0.5">
                           <h2 className="text-base line-clamp-1">
                             {product?.title}
@@ -92,19 +121,32 @@ const MyCart = () => {
                           </p>
                         </div>
                         <div className="flex flex-col gap-y-1">
-                          <p className="flex flex-row justify-between">
+                          <p className="flex flex-row justify-between items-center">
                             <span className="text-xs flex flex-row gap-x-0.5 items-baseline">
                               $
                               <span className="text-sm text-black">
                                 {product?.price * quantity}.00
                               </span>
                             </span>
-                            <span className="text-xs flex flex-row gap-x-0.5 items-baseline">
-                              QTY
-                              <span className="text-sm text-black">
+                            <div className="flex flex-row gap-x-1 items-center border rounded">
+                              <button
+                                onClick={() => handleUpdateQuantity(_id, quantity, -1)}
+                                disabled={quantity === 1 || isUpdating}
+                                className="p-0.5 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <AiOutlineMinus className="w-3 h-3" />
+                              </button>
+                              <span className="text-xs px-1.5 min-w-[20px] text-center">
                                 {quantity}
                               </span>
-                            </span>
+                              <button
+                                onClick={() => handleUpdateQuantity(_id, quantity, 1)}
+                                disabled={isUpdating}
+                                className="p-0.5 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <AiOutlinePlus className="w-3 h-3" />
+                              </button>
+                            </div>
                           </p>
                           <div className="flex flex-row gap-x-1">
                             <span className="whitespace-nowrap text-[10px] bg-purple-300/50 text-purple-500 border border-purple-500 px-1.5 rounded">
@@ -120,15 +162,15 @@ const MyCart = () => {
                         </div>
                       </article>
 
-                      <button
-                        type="button"
-                        className="opacity-0 transition-opacity group-hover:opacity-100 absolute top-2 right-2 border p-1 rounded-secondary bg-red-100 text-red-900 border-red-900"
-                        onClick={() => removeFromCart(_id)}
-                      >
-                        <Trash />
-                      </button>
-                    </div>
-                  ))}
+                        <button
+                          type="button"
+                          className="opacity-0 transition-opacity group-hover:opacity-100 absolute top-2 right-2 border p-1 rounded-secondary bg-red-100 text-red-900 border-red-900"
+                          onClick={() => removeFromCart(_id)}
+                        >
+                          <Trash />
+                        </button>
+                      </div>
+                    ))}
                 </div>
                 <Purchase cart={user?.cart} />
               </div>
@@ -141,50 +183,26 @@ const MyCart = () => {
 };
 
 function Purchase({ cart }) {
-  const [createPayment, { isLoading, data, error }] =
-    useCreatePaymentMutation();
-
-  useEffect(() => {
-    if (isLoading) {
-      toast.loading("Creating payment...", { id: "createPayment" });
+  const router = useRouter();
+  
+  const handleCheckout = () => {
+    if (cart.length === 0) {
+      toast.error("Your cart is empty!");
+      return;
     }
-
-    if (data) {
-      toast.success(data?.description, { id: "createPayment" });
-      window.open(data?.url, "_blank");
-    }
-
-    if (error?.data) {
-      toast.error(error?.data?.description, { id: "createPayment" });
-    }
-  }, [isLoading, data, error]);
-
-  const result = cart.map(
-    ({
-      product: { title, thumbnail, price, summary, _id: pid },
-      quantity,
-      _id: cid,
-    }) => ({
-      name: title,
-      quantity,
-      price,
-      thumbnail: thumbnail?.url,
-      description: summary,
-      pid,
-      cid,
-    })
-  );
+    
+    // Navigate to checkout page
+    router.push("/checkout");
+  };
 
   return (
-    <>
-      <button
-        type="button"
-        className="px-8 py-2 border border-black rounded-secondary bg-black hover:bg-black/90 text-white transition-colors drop-shadow flex flex-row gap-x-2 items-center justify-center"
-        onClick={() => createPayment(result)}
-      >
-        Purchase
-      </button>
-    </>
+    <button
+      type="button"
+      className="px-8 py-2 border border-black rounded-secondary bg-black hover:bg-black/90 text-white transition-colors drop-shadow flex flex-row gap-x-2 items-center justify-center"
+      onClick={handleCheckout}
+    >
+      Proceed to Checkout
+    </button>
   );
 }
 

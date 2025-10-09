@@ -18,16 +18,22 @@
 import Inform from "@/components/icons/Inform";
 import Trash from "@/components/icons/Trash";
 import Dashboard from "@/components/shared/layouts/Dashboard";
-import { useDeleteFromCartMutation } from "@/services/cart/cartApi";
+import { useDeleteFromCartMutation, useUpdateCartMutation } from "@/services/cart/cartApi";
 import Image from "next/image";
 import React, { useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { useSelector } from "react-redux";
+import { AiOutlineMinus, AiOutlinePlus } from "react-icons/ai";
 
 const Page = () => {
   const user = useSelector((state) => state.auth.user);
   const [removeFromCart, { isLoading, data, error }] =
     useDeleteFromCartMutation();
+
+  const [
+    updateCart,
+    { isLoading: isUpdating, data: updateData, error: updateError },
+  ] = useUpdateCartMutation();
 
   useEffect(() => {
     if (isLoading) {
@@ -42,6 +48,26 @@ const Page = () => {
       toast.error(error?.data?.description, { id: "removeFromCart" });
     }
   }, [isLoading, data, error]);
+
+  useEffect(() => {
+    if (isUpdating) {
+      toast.loading("Updating cart...", { id: "updateCart" });
+    }
+
+    if (updateData) {
+      toast.success(updateData?.description, { id: "updateCart" });
+    }
+
+    if (updateError?.data) {
+      toast.error(updateError?.data?.description, { id: "updateCart" });
+    }
+  }, [isUpdating, updateData, updateError]);
+
+  const handleUpdateQuantity = (cartId, currentQuantity, change) => {
+    const newQuantity = currentQuantity + change;
+    if (newQuantity < 1) return;
+    updateCart({ id: cartId, quantity: newQuantity });
+  };
 
   return (
     <Dashboard>
@@ -124,11 +150,13 @@ const Page = () => {
                 </tr>
               </thead>
               <tbody>
-                {user?.cart?.map(({ product, quantity, _id }) => (
-                  <tr
-                    key={product?._id}
-                    className="odd:bg-white even:bg-gray-100 hover:odd:bg-gray-100"
-                  >
+                {user?.cart
+                  ?.filter((item) => item.product !== null)
+                  .map(({ product, quantity, _id }) => (
+                    <tr
+                      key={product?._id}
+                      className="odd:bg-white even:bg-gray-100 hover:odd:bg-gray-100"
+                    >
                     <td className="px-6 py-4">
                       <Image
                         src={product?.thumbnail?.url}
@@ -144,9 +172,25 @@ const Page = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="whitespace-nowrap scrollbar-hide text-sm">
-                        {quantity}
-                      </span>
+                      <div className="flex flex-row gap-x-1 items-center border rounded w-fit">
+                        <button
+                          onClick={() => handleUpdateQuantity(_id, quantity, -1)}
+                          disabled={quantity === 1 || isUpdating}
+                          className="p-1.5 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <AiOutlineMinus className="w-3 h-3" />
+                        </button>
+                        <span className="text-sm px-2 min-w-[30px] text-center">
+                          {quantity}
+                        </span>
+                        <button
+                          onClick={() => handleUpdateQuantity(_id, quantity, 1)}
+                          disabled={isUpdating}
+                          className="p-1.5 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <AiOutlinePlus className="w-3 h-3" />
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className="whitespace-nowrap scrollbar-hide text-sm">

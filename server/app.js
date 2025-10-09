@@ -20,9 +20,29 @@ require("dotenv").config();
 
 /* internal import */
 const error = require("./middleware/error.middleware");
+const { cleanExpiredCarts } = require("./utils/cleanExpiredCarts.util");
 
 /* application level connection */
 const app = express();
+
+/* Schedule expired cart cleanup - runs every 10 minutes */
+setInterval(async () => {
+  console.log("[CRON] Running expired cart cleanup...");
+  const result = await cleanExpiredCarts();
+  if (result.success) {
+    console.log(`[CRON] Cleaned ${result.cleaned} expired cart(s)`);
+  } else {
+    console.error(`[CRON] Cleanup failed: ${result.error}`);
+  }
+}, 10 * 60 * 1000); // 10 minutes
+
+// Run cleanup on server start
+console.log("[INIT] Running initial cart cleanup...");
+cleanExpiredCarts().then((result) => {
+  if (result.success) {
+    console.log(`[INIT] Cleaned ${result.cleaned} expired cart(s) on startup`);
+  }
+});
 
 /* CORS configuration - allow multiple origins */
 const allowedOrigins = [
@@ -67,6 +87,7 @@ app.use("/api/purchase", require("./routes/purchase.route"));
 // ADD: system settings route
 app.use("/api/system", require("./routes/system.route"));
 app.use("/api/section", require("./routes/section.route")); // ADD THIS LINE
+app.use("/api/order", require("./routes/order.route")); // ✅ FIXED - now matches /api/order/create-order
 
 /* global error handler */
 app.use(error);

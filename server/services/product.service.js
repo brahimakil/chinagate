@@ -212,6 +212,7 @@ exports.updateProduct = async (req, res) => {
     features, variations, socialLinks, season, productStatus, isHidden,
     enableColors, enableCustomSpecs, enableSocialLinks, enableStore,
     colorImageNames, // 🆕
+    stock, // 🆕 Extract stock separately
     ...otherInformation 
   } = req.body;
   const { thumbnail, gallery, colorImages } = req.files || {};
@@ -229,6 +230,23 @@ exports.updateProduct = async (req, res) => {
   }
 
   const updateData = { ...otherInformation };
+
+  // 🆕 Handle stock as increment/decrement instead of replacement
+  if (stock !== undefined) {
+    const stockChange = Number(stock);
+    const newStock = (product.stock || 0) + stockChange;
+    
+    if (newStock < 0) {
+      return res.status(400).json({
+        acknowledgement: false,
+        message: "Bad Request",
+        description: `Cannot reduce stock by ${Math.abs(stockChange)}. Current stock is ${product.stock}`,
+      });
+    }
+    
+    updateData.stock = newStock;
+    console.log(`📦 Stock update: ${product.stock} + (${stockChange}) = ${newStock}`);
+  }
 
   // Handle thumbnail update
   if (!req.body.thumbnail && req.files && req.files.thumbnail?.length > 0) {

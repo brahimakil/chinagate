@@ -6,7 +6,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -43,9 +43,15 @@ const ProductDetail = () => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false); // 🆕 For mobile zoom modal
   const [isMobile, setIsMobile] = useState(false); // 🆕 Detect mobile
   
-  // API calls
-  const { data: productData, error: productError, isLoading: productLoading } = useGetProductQuery(id);
-  const { data: favoritesData } = useGetFavoritesQuery();
+  // API calls with real-time polling
+  const { data: productData, error: productError, isLoading: productLoading } = useGetProductQuery(id, {
+    pollingInterval: 3000, // Poll every 3 seconds for real-time stock updates
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  });
+  const { data: favoritesData } = useGetFavoritesQuery(undefined, {
+    skip: !user, // 🆕 Skip query if user is not logged in
+  });
   const [addToCart, { isLoading: addingToCart }] = useAddToCartMutation();
   const [addToFavorite, { isLoading: addingToFavorite }] = useAddToFavoriteMutation();
   const { data: settingsData } = useGetSystemSettingsQuery();
@@ -53,6 +59,26 @@ const ProductDetail = () => {
   const product = useMemo(() => productData?.data || {}, [productData]);
   const favorites = useMemo(() => favoritesData?.data || [], [favoritesData]);
   const isFavorite = favorites.some(fav => fav.product._id === product._id);
+  
+  // Track stock changes for real-time notifications
+  const previousStockRef = useRef(null);
+  useEffect(() => {
+    if (product.stock !== undefined) {
+      if (previousStockRef.current !== null && previousStockRef.current !== product.stock) {
+        const diff = product.stock - previousStockRef.current;
+        if (diff < 0) {
+          toast(`Stock updated: ${Math.abs(diff)} item${Math.abs(diff) > 1 ? 's' : ''} just ${Math.abs(diff) > 1 ? 'were' : 'was'} purchased! 📦`, {
+            duration: 3000,
+          });
+        } else if (diff > 0) {
+          toast(`Stock replenished: ${diff} item${diff > 1 ? 's' : ''} added! ✨`, {
+            duration: 3000,
+          });
+        }
+      }
+      previousStockRef.current = product.stock;
+    }
+  }, [product.stock]);
   
   // All images (thumbnail + gallery + color images)
   const allImages = useMemo(() => {
@@ -150,12 +176,57 @@ const ProductDetail = () => {
 
   // Handle add to cart
   const handleAddToCart = async () => {
+    // CRITICAL: Check user authentication FIRST
     if (!user) {
-      toast.error("Please login to add items to cart");
-      router.push("/auth");
-      return;
+      console.log("User not authenticated - showing sign-in prompt");
+      toast.error(
+        (t) => (
+          <div className="flex flex-col gap-3 p-2">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-gray-900 text-base mb-1">Sign In Required</div>
+                <div className="text-sm text-gray-600">Please sign in to add items to your cart and continue shopping</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                router.push("/auth");
+              }}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Sign In to Continue
+            </button>
+          </div>
+        ),
+        { 
+          duration: 8000,
+          style: {
+            minWidth: "320px",
+            maxWidth: "400px",
+            background: "white",
+            padding: "8px",
+            borderRadius: "16px",
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.15)",
+            border: "1px solid rgba(0, 0, 0, 0.05)"
+          },
+          icon: null, // Remove default icon
+        }
+      );
+      return; // STOP HERE - do NOT proceed to API call
     }
 
+    // User is authenticated - proceed with adding to cart
+    console.log("User authenticated - adding to cart");
+    
     try {
       const cartData = {
         product: product._id,
@@ -163,28 +234,79 @@ const ProductDetail = () => {
       };
 
       const result = await addToCart(cartData);
-      if (result?.data?.success) {
-        toast.success("Added to cart successfully!");
+      if (result?.data?.acknowledgement) {
+        toast.success(result?.data?.description || "Added to cart successfully!");
+      } else if (result?.error) {
+        toast.error(result?.error?.data?.description || "Failed to add to cart");
       }
     } catch (error) {
+      console.error("Error adding to cart:", error);
       toast.error("Failed to add to cart");
     }
   };
 
   // Handle add to favorites
   const handleAddToFavorite = async () => {
+    // CRITICAL: Check user authentication FIRST
     if (!user) {
-      toast.error("Please login to add to favorites");
-      router.push("/auth");
-      return;
+      console.log("User not authenticated - showing sign-in prompt for favorites");
+      toast.error(
+        (t) => (
+          <div className="flex flex-col gap-3 p-2">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center shadow-lg">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-gray-900 text-base mb-1">Sign In Required</div>
+                <div className="text-sm text-gray-600">Please sign in to save your favorite items and access them anytime</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                router.push("/auth");
+              }}
+              className="w-full bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Sign In to Continue
+            </button>
+          </div>
+        ),
+        { 
+          duration: 8000,
+          style: {
+            minWidth: "320px",
+            maxWidth: "400px",
+            background: "white",
+            padding: "8px",
+            borderRadius: "16px",
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.15)",
+            border: "1px solid rgba(0, 0, 0, 0.05)"
+          },
+          icon: null, // Remove default icon
+        }
+      );
+      return; // STOP HERE - do NOT proceed to API call
     }
 
+    // User is authenticated - proceed with adding to favorites
+    console.log("User authenticated - adding to favorites");
+    
     try {
       const result = await addToFavorite({ product: product._id });
-      if (result?.data?.success) {
-        toast.success(isFavorite ? "Removed from favorites" : "Added to favorites");
+      if (result?.data?.acknowledgement) {
+        toast.success(result?.data?.description || (isFavorite ? "Removed from favorites" : "Added to favorites"));
+      } else if (result?.error) {
+        toast.error(result?.error?.data?.description || "Failed to update favorites");
       }
     } catch (error) {
+      console.error("Error updating favorites:", error);
       toast.error("Failed to update favorites");
     }
   };
@@ -421,6 +543,9 @@ const ProductDetail = () => {
     );
   }
 
+  // In Approach 2, stock is directly decreased when added to cart
+  const availableStock = product.stock || 0;
+
   return (
     <>
       <Main>
@@ -553,20 +678,22 @@ const ProductDetail = () => {
                     {averageRating.toFixed(1)} ({product.reviews?.length || 0} reviews)
                   </span>
                 </div>
-                {/* Stock Status - FIXED */}
-                {product.stock > 5 ? (
-                  <span className="text-green-600 text-sm font-medium">
-                    In Stock
-                  </span>
-                ) : product.stock > 0 ? (
-                  <span className="text-orange-600 text-sm font-medium">
-                    Low Stock
-                  </span>
-                ) : (
-                  <span className="text-red-600 text-sm font-medium">
-                    Out of Stock
-                  </span>
-                )}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">Stock Status</h3>
+                  {availableStock > 5 ? (
+                    <p className="text-green-600 font-medium transition-all duration-300">
+                      ✓ In Stock
+                    </p>
+                  ) : availableStock > 0 ? (
+                    <p className="text-orange-600 font-medium transition-all duration-300 animate-pulse">
+                      ⚠ Low Stock
+                    </p>
+                  ) : (
+                    <p className="text-red-600 font-semibold transition-all duration-300">
+                      ✗ Out of Stock
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Price */}
@@ -670,15 +797,10 @@ const ProductDetail = () => {
               <div className="space-y-3">
                 <button
                   onClick={handleAddToCart}
-                  disabled={addingToCart || product.stock === 0 || quantity > product.stock}
-                  className="w-full bg-black text-white py-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={availableStock === 0 || addingToCart}
+                  className={`w-full bg-black text-white py-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${availableStock === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {product.stock === 0 
-                    ? "Out of Stock" 
-                    : addingToCart 
-                      ? "Adding..." 
-                      : "Add to Cart"
-                  }
+                  {availableStock === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </button>
                 
                 {/* WhatsApp Chat Button - NEW */}

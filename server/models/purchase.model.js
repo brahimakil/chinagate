@@ -59,10 +59,45 @@ const purchaseSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Delivery tax (captured at order creation)
+    deliveryTax: {
+      type: Number,
+      default: 0,
+    },
+
+    // Subtotal (before delivery tax)
+    subtotal: {
+      type: Number,
+      required: true,
+    },
+
+    // Delivery Information
+    deliveryAddress: {
+      type: String,
+      required: true,
+    },
+
+    whatsappNumber: {
+      type: String,
+      required: true,
+    },
+
+    customerNotes: {
+      type: String,
+      default: "",
+    },
+
+    // Payment method
+    paymentMethod: {
+      type: String,
+      enum: ["cash_on_delivery", "online"],
+      default: "cash_on_delivery",
+    },
+
     // order status
     status: {
       type: String,
-      enum: ["pending", "delivered"],
+      enum: ["pending", "delivered", "cancelled"],
       default: "pending",
     },
 

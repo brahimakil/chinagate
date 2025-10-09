@@ -6,6 +6,11 @@ const systemSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    deliveryTax: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     // 🆕 Banner configurations for different pages
     homePageBanner: {
       image: {

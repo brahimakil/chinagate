@@ -28,7 +28,7 @@ const cartApi = canimApi.injectEndpoints({
         body,
       }),
 
-      invalidatesTags: ["Cart", "User"],
+      invalidatesTags: ["Cart", "User", "Product"],
     }),
 
     // get from cart
@@ -44,6 +44,20 @@ const cartApi = canimApi.injectEndpoints({
       providesTags: ["Cart"],
     }),
 
+    // update cart
+    updateCart: build.mutation({
+      query: ({ id, quantity }) => ({
+        url: `/cart/update-cart/${id}`,
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        body: { quantity },
+      }),
+
+      invalidatesTags: ["Cart", "User", "Product"],
+    }),
+
     // delete from cart
     deleteFromCart: build.mutation({
       query: (id) => ({
@@ -54,7 +68,7 @@ const cartApi = canimApi.injectEndpoints({
         },
       }),
 
-      invalidatesTags: ["Cart", "User"],
+      invalidatesTags: ["Cart", "User", "Product"],
     }),
   }),
 });
@@ -62,5 +76,6 @@ const cartApi = canimApi.injectEndpoints({
 export const {
   useAddToCartMutation,
   useGetFromCartQuery,
+  useUpdateCartMutation,
   useDeleteFromCartMutation,
 } = cartApi;
