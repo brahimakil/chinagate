@@ -31,6 +31,12 @@ export const canimApi = createApi({
     "Purchase",
     "Review",
     "Section",
+    "System",
   ],
+  // 🚀 PERFORMANCE: Aggressive caching for mobile
+  keepUnusedDataFor: 300, // Keep data for 5 minutes (default is 60s)
+  refetchOnMountOrArgChange: 120, // Only refetch if data is older than 2 minutes
+  refetchOnFocus: false, // Don't refetch when user returns to tab (saves mobile data)
+  refetchOnReconnect: true, // Refetch when connection is restored
   endpoints: () => ({}),
 });
