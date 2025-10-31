@@ -112,6 +112,12 @@ exports.updateSection = async (req, res) => {
   const { id } = req.params;
   const updateData = { ...req.body };
 
+  console.log('📝 Update section request:', {
+    id,
+    bodyKeys: Object.keys(req.body),
+    files: req.files ? Object.keys(req.files) : 'none'
+  });
+
   // Parse isActive to boolean if it exists
   if (updateData.isActive !== undefined) {
     updateData.isActive = updateData.isActive === 'true' || updateData.isActive === true;
@@ -137,10 +143,48 @@ exports.updateSection = async (req, res) => {
   console.log('New filterKey:', updateData.filterKey);
   console.log('IsActive update:', updateData.isActive);
 
+  // 🖼️ Handle banner image upload (for product sections)
+  if (req.files && req.files.bannerImage && req.files.bannerImage[0]) {
+    console.log('🖼️ Updating bannerImage...');
+    console.log('📁 File details:', {
+      path: req.files.bannerImage[0].path,
+      filename: req.files.bannerImage[0].filename,
+      size: req.files.bannerImage[0].size
+    });
+    updateData.bannerImage = {
+      url: req.files.bannerImage[0].path,
+      public_id: req.files.bannerImage[0].filename,
+    };
+  }
+
+  // 🖼️ Handle ad image upload (for advertisement sections)
+  if (req.files && req.files.adImage && req.files.adImage[0]) {
+    console.log('🖼️ Updating adImage...');
+    console.log('📁 File details:', {
+      path: req.files.adImage[0].path,
+      filename: req.files.adImage[0].filename,
+      size: req.files.adImage[0].size
+    });
+    updateData.adImage = {
+      url: req.files.adImage[0].path,
+      public_id: req.files.adImage[0].filename,
+    };
+  }
+
   // 🔥 STEP 2: Update the section
   const section = await Section.findByIdAndUpdate(id, updateData, {
     new: true,
     runValidators: true,
+  });
+
+  console.log('✅ Section updated successfully!');
+  console.log('📊 Section details:', {
+    id: section._id,
+    filterKey: section.filterKey,
+    hasAdImage: !!section.adImage?.url,
+    adImageUrl: section.adImage?.url || 'none',
+    hasBannerImage: !!section.bannerImage?.url,
+    bannerImageUrl: section.bannerImage?.url || 'none',
   });
 
   // 🔥 STEP 3: If filterKey changed, update all related products

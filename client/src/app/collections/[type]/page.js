@@ -509,8 +509,30 @@ const CollectionPage = () => {
   const collectionInfo = getCollectionInfo();
   
   // Get banner - use section banner if exists, otherwise use all products banner for type=all
-  const currentSection = sections.find(s => s.filterKey === type);
+  // 🔥 Handle both singular and plural forms (best-seller vs best-sellers)
+  const currentSection = sections.find(s => 
+    s.filterKey === type || 
+    s.filterKey === type.replace(/s$/, '') || // Remove trailing 's'
+    s.filterKey + 's' === type // Add 's'
+  );
   const banner = currentSection || (type === 'all' && settings?.allProductsPageBanner);
+
+  // 🔍 DEBUG: Log what we're getting
+  console.log('🔍 COLLECTION PAGE DEBUG:', {
+    type,
+    sectionsCount: sections.length,
+    allFilterKeys: sections.map(s => s.filterKey),
+    currentSection: currentSection ? {
+      id: currentSection._id,
+      filterKey: currentSection.filterKey,
+      hasBannerImage: !!currentSection.bannerImage?.url,
+      bannerImageUrl: currentSection.bannerImage?.url,
+    } : 'NOT FOUND',
+    banner: banner ? {
+      hasBannerImage: !!banner.bannerImage?.url,
+      bannerImageUrl: banner.bannerImage?.url,
+    } : 'NO BANNER'
+  });
 
   // Helper to get current section data
   // const currentSection = sections.find(s => s.filterKey === type);

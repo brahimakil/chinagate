@@ -702,6 +702,49 @@ const ProductDetail = () => {
                 <span className="text-sm text-gray-500">Free shipping</span>
               </div>
 
+                   {/* Action Buttons */}
+                   <div className="space-y-3">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={availableStock === 0 || addingToCart}
+                  className={`w-full bg-black text-white py-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${availableStock === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {availableStock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                </button>
+                
+                {/* WhatsApp Chat Button - NEW */}
+                {whatsappNumber && (
+                  <button
+                    onClick={handleWhatsAppChat}
+                    className="w-full bg-green-500 text-white py-4 rounded-lg font-semibold hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <BsWhatsapp className="text-2xl" />
+                    <span>Chat on WhatsApp</span>
+                  </button>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={handleAddToFavorite}
+                    disabled={addingToFavorite}
+                    className="flex items-center justify-center space-x-2 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    {isFavorite ? (
+                      <BsHeartFill className="w-5 h-5 text-red-500" />
+                    ) : (
+                      <BsHeart className="w-5 h-5" />
+                    )}
+                    <span className="font-medium">Favorite</span>
+                  </button>
+                  
+                  <button className="flex items-center justify-center space-x-2 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <FiShare2 className="w-5 h-5" />
+                    <span className="font-medium">Share</span>
+                  </button>
+                </div>
+              </div>
+
+
               {/* Colors */}
               {product.colors && product.colors.length > 0 && (
                 <div>
@@ -793,74 +836,8 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={availableStock === 0 || addingToCart}
-                  className={`w-full bg-black text-white py-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${availableStock === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {availableStock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                </button>
-                
-                {/* WhatsApp Chat Button - NEW */}
-                {whatsappNumber && (
-                  <button
-                    onClick={handleWhatsAppChat}
-                    className="w-full bg-green-500 text-white py-4 rounded-lg font-semibold hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <BsWhatsapp className="text-2xl" />
-                    <span>Chat on WhatsApp</span>
-                  </button>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={handleAddToFavorite}
-                    disabled={addingToFavorite}
-                    className="flex items-center justify-center space-x-2 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    {isFavorite ? (
-                      <BsHeartFill className="w-5 h-5 text-red-500" />
-                    ) : (
-                      <BsHeart className="w-5 h-5" />
-                    )}
-                    <span className="font-medium">Favorite</span>
-                  </button>
-                  
-                  <button className="flex items-center justify-center space-x-2 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    <FiShare2 className="w-5 h-5" />
-                    <span className="font-medium">Share</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Features */}
-              <div className="border-t pt-6 space-y-4">
-                <div className="flex items-center space-x-3">
-                  <BsTruck className="w-5 h-5 text-green-600" />
-                  <div>
-                    <p className="font-medium">Free Shipping</p>
-                    <p className="text-sm text-gray-600">On orders over $50</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  <BsArrowReturnLeft className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium">30-Day Returns</p>
-                    <p className="text-sm text-gray-600">Easy return policy</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  <BsShieldCheck className="w-5 h-5 text-purple-600" />
-                  <div>
-                    <p className="font-medium">2 Year Warranty</p>
-                    <p className="text-sm text-gray-600">Full manufacturer warranty</p>
-                  </div>
-                </div>
-              </div>
+         
+          
 
               {/* Description */}
               {product.description && (
