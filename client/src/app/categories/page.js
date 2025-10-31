@@ -32,12 +32,31 @@ const CategoriesPage = () => {
   const products = useMemo(() => productsData?.data || [], [productsData]);
   const banner = settingsData?.data?.categoriesPageBanner;
 
-  // Calculate product count for each category
+  // 🔍 DEBUG: Check products data
+  console.log('📦 Products API data:', {
+    totalProducts: products.length,
+    productIds: products.map(p => ({ id: p._id, title: p.title, category: p.category?.title, isHidden: p.isHidden }))
+  });
+
+  // Calculate product count for each category (only visible, non-hidden products)
   const categoriesWithProductCount = useMemo(() => {
-    return categories.map(category => ({
-      ...category,
-      productCount: products.filter(product => product.category?._id === category._id).length
-    }));
+    console.log('🔢 Calculating counts...');
+    return categories.map(category => {
+      const visibleProducts = products.filter(product => 
+        product.category?._id === category._id && 
+        !product.isHidden // Exclude hidden products
+      );
+      
+      console.log(`Category "${category.title}" (${category._id}):`, {
+        count: visibleProducts.length,
+        products: visibleProducts.map(p => p.title)
+      });
+      
+      return {
+        ...category,
+        productCount: visibleProducts.length
+      };
+    });
   }, [categories, products]);
 
   // Filter and sort categories
@@ -152,9 +171,12 @@ const CategoriesPage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredAndSortedCategories.map((category, index) => (
+                {filteredAndSortedCategories.map((category, index) => {
+                  const count = category.productCount || 0;
+                  console.log(`🎨 Rendering "${category.title}": count = ${count}`);
+                  return (
                   <div
-                    key={category._id}
+                    key={`cat-${category._id}-count-${count}-${Date.now()}`}
                     onClick={() => handleCategoryClick(category._id)}
                     className={`group cursor-pointer bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-2 ${
                       isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
@@ -171,14 +193,15 @@ const CategoriesPage = () => {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                       <div className="absolute bottom-4 left-4 text-white">
                         <h3 className="text-xl font-bold">{category.title}</h3>
-                        <p className="text-sm opacity-90">{category.productCount || 0} Products</p>
+                        <p className="text-sm opacity-90">{count} Product{count !== 1 ? 's' : ''}</p>
                       </div>
                     </div>
                     <div className="p-4">
                       <p className="text-sm text-gray-600 line-clamp-2">{category.description}</p>
                     </div>
                   </div>
-                ))}
+                )})}
+
               </div>
             )}
           </div>

@@ -19,6 +19,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import OutsideClick from "../OutsideClick";
 import { BiCategory, BiChevronDown } from "react-icons/bi";
 import { useGetCategoriesQuery } from "@/services/category/categoryApi";
+import { useGetProductsQuery } from "@/services/product/productApi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import CategoryCard from "../skeletonLoading/CategoryCard";
@@ -34,10 +35,20 @@ const Categories = () => {
     error: categoriesError,
     isLoading: categoriesLoading,
   } = useGetCategoriesQuery();
+  const { data: productsData } = useGetProductsQuery();
   const categories = useMemo(
     () => categoriesData?.data || [],
     [categoriesData]
   );
+  const products = useMemo(() => productsData?.data || [], [productsData]);
+  
+  const categoriesWithProductCount = useMemo(() => {
+    return categories.map(category => ({
+      ...category,
+      productCount: products.filter(product => product.category?._id === category._id && !product.isHidden).length
+    }));
+  }, [categories, products]);
+  
   const {
     isLoading: brandsLoading,
     error: brandsError,
@@ -130,7 +141,7 @@ const Categories = () => {
                     </div>
                   ) : (
                     <>
-                      {categories.map((category) => (
+                      {categoriesWithProductCount.map((category) => (
                         <div
                           key={category?._id}
                           className="w-full flex flex-row items-start gap-x-2 p-2 border border-transparent hover:border-black rounded cursor-pointer"
@@ -152,7 +163,7 @@ const Categories = () => {
                               {category?.description}
                             </p>
                             <span className="text-[10px] bg-purple-300/50 text-purple-500 border border-purple-500 px-1.5 rounded">
-                              Products: {category?.products?.length}
+                              Products: {category?.productCount || 0}
                             </span>
                           </article>
                         </div>

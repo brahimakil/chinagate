@@ -99,7 +99,7 @@ const Page = () => {
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-sm">
-                            {products?.length} item{products?.length > 1 ? 's' : ''}
+                            {products?.reduce((total, item) => total + (item.quantity || 0), 0)} item{products?.reduce((total, item) => total + (item.quantity || 0), 0) !== 1 ? 's' : ''}
                           </span>
                         </td>
                         <td className="px-6 py-4">

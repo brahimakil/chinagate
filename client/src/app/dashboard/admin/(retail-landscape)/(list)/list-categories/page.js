@@ -27,7 +27,7 @@ import {
   useDeleteCategoryMutation,
   useGetCategoriesQuery,
 } from "@/services/category/categoryApi";
-import { useDeleteProductMutation } from "@/services/product/productApi";
+import { useDeleteProductMutation, useGetProductsQuery } from "@/services/product/productApi";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
@@ -40,10 +40,20 @@ const ListCategories = () => {
     error: categoriesError,
     isLoading: categoriesLoading,
   } = useGetCategoriesQuery();
+  const { data: productsData } = useGetProductsQuery();
   const categories = useMemo(
     () => categoriesData?.data || [],
     [categoriesData]
   );
+  const products = useMemo(() => productsData?.data || [], [productsData]);
+  
+  const categoriesWithProductCount = useMemo(() => {
+    return categories.map(category => ({
+      ...category,
+      productCount: products.filter(product => product.category?._id === category._id && !product.isHidden).length
+    }));
+  }, [categories, products]);
+  
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -125,7 +135,7 @@ const ListCategories = () => {
                 </tr>
               </thead>
               <tbody>
-                {categories.map((category) => (
+                {categoriesWithProductCount.map((category) => (
                   <tr
                     key={category?._id}
                     className="odd:bg-white even:bg-gray-100 hover:odd:bg-gray-100"
@@ -146,7 +156,7 @@ const ListCategories = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="whitespace-nowrap scrollbar-hide text-sm">
-                        {category?.products?.length}
+                        {category?.productCount || 0}
                       </span>
                     </td>
                     <td className="px-6 py-4">

@@ -35,10 +35,17 @@ const Header = () => {
   const stores = useMemo(() => storesData?.data || [], [storesData]);
   const products = useMemo(() => productsData?.data || [], [productsData]);
 
+  const categoriesWithProductCount = useMemo(() => {
+    return categories.map(category => ({
+      ...category,
+      productCount: products.filter(product => product.category?._id === category._id && !product.isHidden).length
+    }));
+  }, [categories, products]);
+
   const brandsWithProductCount = useMemo(() => {
     return brands.map(brand => ({
       ...brand,
-      productCount: products.filter(product => product.brand?._id === brand._id).length
+      productCount: products.filter(product => product.brand?._id === brand._id && !product.isHidden).length
     }));
   }, [brands, products]);
 
@@ -123,7 +130,7 @@ const Header = () => {
                     <div className="p-4">
                       <h3 className="text-sm font-semibold text-gray-900 mb-3">Browse Categories</h3>
                       <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto">
-                        {categories.slice(0, 8).map((category) => (
+                        {categoriesWithProductCount.slice(0, 8).map((category) => (
                           <button
                             key={category._id}
                             onClick={() => router.push(`/collections/all?category=${category._id}`)} // CORRECT: Individual category filter
@@ -138,7 +145,7 @@ const Header = () => {
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 truncate">{category.title}</p>
-                              <p className="text-xs text-gray-500">{category.products?.length || 0} products</p>
+                              <p className="text-xs text-gray-500">{category.productCount || 0} products</p>
                             </div>
                           </button>
                         ))}
@@ -389,17 +396,31 @@ const Header = () => {
                 <SearchFilter />
               </div>
 
-              {/* Categories - Expandable */}
+              {/* Categories - Expandable with Direct Link */}
               <div>
-                <button onClick={() => toggleSection('categories')} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3">
+                <div className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                  <button 
+                    onClick={() => { 
+                      toggleSection('categories'); 
+                      router.push('/categories'); 
+                    }} 
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
                     <span className="text-xl">📂</span>
                     <span className="font-medium text-gray-900">Categories</span>
-                  </div>
-                  <svg className={`w-5 h-5 transition-transform ${expandedSection === 'categories' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                  </button>
+                  <button 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      toggleSection('categories'); 
+                    }}
+                    className="p-1 hover:bg-gray-200 rounded"
+                  >
+                    <svg className={`w-5 h-5 transition-transform ${expandedSection === 'categories' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
                 {expandedSection === 'categories' && (
                   <div className="ml-10 mt-2 space-y-1">
                     {categories.map((category) => (
@@ -411,17 +432,31 @@ const Header = () => {
                 )}
               </div>
 
-              {/* Brands - Expandable */}
+              {/* Brands - Expandable with Direct Link */}
               <div>
-                <button onClick={() => toggleSection('brands')} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3">
+                <div className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                  <button 
+                    onClick={() => { 
+                      toggleSection('brands'); 
+                      router.push('/brands'); 
+                    }} 
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
                     <span className="text-xl">🏷️</span>
                     <span className="font-medium text-gray-900">Brands</span>
-                  </div>
-                  <svg className={`w-5 h-5 transition-transform ${expandedSection === 'brands' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7-7-7-7" />
-                  </svg>
-                </button>
+                  </button>
+                  <button 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      toggleSection('brands'); 
+                    }}
+                    className="p-1 hover:bg-gray-200 rounded"
+                  >
+                    <svg className={`w-5 h-5 transition-transform ${expandedSection === 'brands' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
                 {expandedSection === 'brands' && (
                   <div className="ml-10 mt-2 space-y-1">
                     {brands.map((brand) => (
@@ -433,17 +468,31 @@ const Header = () => {
                 )}
               </div>
 
-              {/* Shop by - Expandable */}
+              {/* Shop by - Expandable with Direct Link */}
               <div>
-                <button onClick={() => toggleSection('shop')} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3">
+                <div className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                  <button 
+                    onClick={() => { 
+                      toggleSection('shop'); 
+                      router.push('/collections/all'); 
+                    }} 
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
                     <span className="text-xl">🛍️</span>
                     <span className="font-medium text-gray-900">Shop by</span>
-                  </div>
-                  <svg className={`w-5 h-5 transition-transform ${expandedSection === 'shop' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                  </button>
+                  <button 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      toggleSection('shop'); 
+                    }}
+                    className="p-1 hover:bg-gray-200 rounded"
+                  >
+                    <svg className={`w-5 h-5 transition-transform ${expandedSection === 'shop' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
                 {expandedSection === 'shop' && (
                   <div className="ml-10 mt-2 space-y-1">
                     <button onClick={() => { router.push('/collections/seasonal'); setSidebarOpen(false); }} className="w-full text-left p-2 rounded hover:bg-gray-50 text-sm text-gray-700">🌍 Seasonal</button>
