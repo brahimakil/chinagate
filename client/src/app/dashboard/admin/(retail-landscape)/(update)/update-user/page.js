@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useUpdateUserMutation, useGetUserQuery } from "@/services/user/userApi";
+import { useUpdateUserInfoMutation, useGetUserQuery } from "@/services/user/userApi";
 import Dashboard from "@/components/shared/layouts/Dashboard";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
@@ -39,7 +39,7 @@ function UpdateUser({ userId }) {
   const [countryCode, setCountryCode] = useState("+961");
   const router = useRouter();
 
-  const [updateUser, { isLoading, data, error }] = useUpdateUserMutation();
+  const [updateUser, { isLoading, data, error }] = useUpdateUserInfoMutation();
   const { data: userData, isLoading: fetchingUser } = useGetUserQuery(userId);
   
   const user = useMemo(() => userData?.data || {}, [userData]);
@@ -121,7 +121,7 @@ function UpdateUser({ userId }) {
       formData.append("password", passwordField);
     }
 
-    updateUser({ id: userId, data: formData });
+    updateUser({ id: userId, body: formData });
   }
 
   if (fetchingUser) {

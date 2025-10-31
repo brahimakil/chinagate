@@ -35,11 +35,32 @@ import { toast } from "react-hot-toast";
 
 const Page = () => {
   const { isLoading, data, error } = useGetUsersQuery();
+  
+  console.log("📡 API Response:", { isLoading, data, error });
+  
   const users = useMemo(() => data?.data || [], [data]);
   const [filter, setFilter] = useState("all");
 
   const filteredUsers = useMemo(
-    () => users.filter((user) => user?.role === filter || filter === "all"),
+    () => {
+      console.log("🔍 Raw users data:", users);
+      console.log("🔍 Users count:", users.length);
+      users.forEach((user, index) => {
+        console.log(`User ${index}:`, {
+          _id: user?._id,
+          name: user?.name,
+          email: user?.email,
+          role: user?.role,
+          status: user?.status,
+          hasStatus: 'status' in (user || {}),
+          fullUser: user
+        });
+      });
+      
+      return users
+        .filter((user) => user && user._id) // Filter out null/undefined users
+        .filter((user) => user?.role === filter || filter === "all");
+    },
     [users, filter]
   );
 

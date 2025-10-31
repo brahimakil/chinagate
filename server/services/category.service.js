@@ -83,6 +83,15 @@ exports.getCategory = async (req, res) => {
 /* update category */
 exports.updateCategory = async (req, res) => {
   const category = await Category.findById(req.params.id);
+  
+  if (!category) {
+    return res.status(404).json({
+      acknowledgement: false,
+      message: "Not Found",
+      description: "Category not found",
+    });
+  }
+  
   let updatedCategory = req.body;
 
   if (!req.body.thumbnail && req.file) {
@@ -94,8 +103,20 @@ exports.updateCategory = async (req, res) => {
     };
   }
 
-  updatedCategory.keynotes = JSON.parse(req.body.keynotes);
-  updatedCategory.tags = JSON.parse(req.body.tags);
+  // Safe JSON parsing with fallback
+  try {
+    updatedCategory.keynotes = req.body.keynotes ? JSON.parse(req.body.keynotes) : [];
+  } catch (error) {
+    console.error("❌ Error parsing keynotes:", error.message);
+    updatedCategory.keynotes = [];
+  }
+
+  try {
+    updatedCategory.tags = req.body.tags ? JSON.parse(req.body.tags) : [];
+  } catch (error) {
+    console.error("❌ Error parsing tags:", error.message);
+    updatedCategory.tags = [];
+  }
 
   await Category.findByIdAndUpdate(req.params.id, updatedCategory);
 

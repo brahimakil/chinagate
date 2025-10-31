@@ -87,6 +87,8 @@ const Page = () => {
                       _id,
                       totalAmount,
                       status,
+                      subtotal,
+                      deliveryTax,
                     }) => (
                     <React.Fragment key={_id}>
                       <tr className="bg-white hover:bg-gray-50 border-b-2">

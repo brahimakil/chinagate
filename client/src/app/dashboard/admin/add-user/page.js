@@ -40,12 +40,20 @@ function AddUser() {
 
     if (data) {
       toast.success("User created successfully!", { id: "addUser" });
+      // Clear form on success
+      const form = document.querySelector('form');
+      if (form) form.reset();
+      setAvatarPreview(null);
+      setAvatar(null);
+      setSelectedRole("buyer");
+      
       setTimeout(() => {
         router.push("/dashboard/admin/list-users");
       }, 1000);
     }
 
     if (error?.data) {
+      // Show error but keep form data so user can fix it
       toast.error(error?.data?.description, { id: "addUser" });
     }
   }, [isLoading, data, error, router]);
@@ -85,11 +93,8 @@ function AddUser() {
 
     addUser(formData); // Changed from signup(formData)
 
-    // Reset form
-    e.target.reset();
-    setAvatarPreview(null);
-    setAvatar(null);
-    setSelectedRole("buyer");
+    // Don't reset form - let user fix errors if any
+    // Form will only reset after successful creation (handled in useEffect)
   }
 
   return (

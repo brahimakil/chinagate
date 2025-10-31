@@ -304,8 +304,11 @@ function UpdateProduct({ productId }) {
   };
 
   const handleFeatureTitleChange = (index, value) => {
-    const updatedFeatures = [...features];
-    updatedFeatures[index].title = value;
+    const updatedFeatures = features.map((feature, idx) => 
+      idx === index 
+        ? { ...feature, title: value, content: [...feature.content] }
+        : { ...feature, content: [...feature.content] }
+    );
     setFeatures(updatedFeatures);
   };
 
@@ -323,14 +326,30 @@ function UpdateProduct({ productId }) {
   };
 
   const handleRemoveContent = (featureIndex, contentIndex) => {
-    const updatedFeatures = [...features];
-    updatedFeatures[featureIndex].content.splice(contentIndex, 1);
+    const updatedFeatures = features.map((feature, index) => {
+      if (index === featureIndex) {
+        return {
+          ...feature,
+          content: feature.content.filter((_, idx) => idx !== contentIndex)
+        };
+      }
+      return { ...feature, content: [...feature.content] };
+    });
     setFeatures(updatedFeatures);
   };
 
   const handleContentChange = (featureIndex, contentIndex, value) => {
-    const updatedFeatures = [...features];
-    updatedFeatures[featureIndex].content[contentIndex] = value;
+    const updatedFeatures = features.map((feature, index) => {
+      if (index === featureIndex) {
+        return {
+          ...feature,
+          content: feature.content.map((item, idx) => 
+            idx === contentIndex ? value : item
+          )
+        };
+      }
+      return { ...feature, content: [...feature.content] };
+    });
     setFeatures(updatedFeatures);
   };
 
@@ -1160,46 +1179,6 @@ function UpdateProduct({ productId }) {
               Add Social Link
             </button>
           </div>
-        )}
-      </div>
-
-      {/* Store Selection Section - COMPLETELY FIXED */}
-      <div className="w-full flex flex-col gap-y-4 p-4 border rounded">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Store Assignment (Optional)</h3>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="enableStore"
-              checked={enableStore}
-              onChange={(e) => {
-                console.log('Store checkbox changed:', e.target.checked);
-                setEnableStore(e.target.checked);
-                if (!e.target.checked) {
-                  setProductStore("");
-                }
-              }}
-              className="rounded"
-            />
-            <label htmlFor="enableStore" className="text-sm font-medium cursor-pointer">
-              Associate with Store
-            </label>
-          </div>
-        </div>
-
-        {enableStore && (
-          <select
-            value={productStore}
-            onChange={(e) => setProductStore(e.target.value)}
-            className="w-full p-2 border rounded-lg"
-          >
-            <option value="">Select a store...</option>
-            {stores.map((store) => (
-              <option key={store._id} value={store._id}>
-                {store.title}
-              </option>
-            ))}
-          </select>
         )}
       </div>
 

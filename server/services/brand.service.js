@@ -80,20 +80,56 @@ exports.getBrand = async (req, res) => {
 
 /* update brand */
 exports.updateBrand = async (req, res) => {
+  console.log("=== BACKEND UPDATE BRAND DEBUG START ===");
+  console.log("Brand ID:", req.params.id);
+  console.log("Request Body:", req.body);
+  console.log("File:", req.file);
+  console.log("req.body.keynotes:", req.body.keynotes, "Type:", typeof req.body.keynotes);
+  console.log("req.body.tags:", req.body.tags, "Type:", typeof req.body.tags);
+  
   const brand = await Brand.findById(req.params.id);
+  
+  if (!brand) {
+    return res.status(404).json({
+      acknowledgement: false,
+      message: "Not Found",
+      description: "Brand not found",
+    });
+  }
+  
   let updatedBrand = req.body;
 
   if (!req.body.logo && req.file) {
+    console.log("✅ Updating logo, deleting old:", brand.logo.public_id);
     await remove(brand.logo.public_id);
 
     updatedBrand.logo = {
       url: req.file.path,
       public_id: req.file.filename,
     };
+  } else {
+    console.log("⚠️ No logo update");
   }
 
-  updatedBrand.keynotes = JSON.parse(req.body.keynotes);
-  updatedBrand.tags = JSON.parse(req.body.tags);
+  // Safe JSON parsing with fallback
+  try {
+    updatedBrand.keynotes = req.body.keynotes ? JSON.parse(req.body.keynotes) : [];
+    console.log("✅ Keynotes parsed:", updatedBrand.keynotes);
+  } catch (error) {
+    console.error("❌ Error parsing keynotes:", error.message);
+    updatedBrand.keynotes = [];
+  }
+
+  try {
+    updatedBrand.tags = req.body.tags ? JSON.parse(req.body.tags) : [];
+    console.log("✅ Tags parsed:", updatedBrand.tags);
+  } catch (error) {
+    console.error("❌ Error parsing tags:", error.message);
+    updatedBrand.tags = [];
+  }
+
+  console.log("Final updatedBrand:", updatedBrand);
+  console.log("=== BACKEND UPDATE BRAND DEBUG END ===");
 
   await Brand.findByIdAndUpdate(req.params.id, updatedBrand);
 

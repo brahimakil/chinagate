@@ -43,18 +43,24 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please, provide a strong password"],
       validate: {
-        validator: (value) =>
-          validator.isStrongPassword(value, {
+        validator: function(value) {
+          // Skip validation if password is already hashed (starts with $2a$ or $2b$)
+          if (value && value.startsWith('$2')) {
+            return true;
+          }
+          // Validate new passwords
+          return validator.isStrongPassword(value, {
             minUppercase: 1,
             minLowercase: 1,
             minNumbers: 1,
             minSymbols: 1,
-          }),
+          });
+        },
         message:
           "Password {VALUE} should contain minimum 1 => uppercase, lowercase, number and symbol",
       },
       minLength: [8, "Password should be at least 8 characters"],
-      maxLength: [20, "Password should be at most 20 characters"],
+      maxLength: [128, "Password should be at most 128 characters"], // Increased to accommodate hashed passwords (60 chars)
     },
 
     // for avatar

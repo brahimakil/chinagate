@@ -88,6 +88,12 @@ const Page = () => {
       formData.append(key, value)
     );
 
+    // Only include password if provided
+    const passwordField = event.target.password?.value;
+    if (passwordField && passwordField.trim() !== "") {
+      formData.append("password", passwordField);
+    }
+
     if (avatarPreview !== null) {
       formData.append("avatar", avatar);
     }
@@ -185,6 +191,29 @@ const Page = () => {
 
             {/* role - REMOVED, all users are buyers */}
 
+          </div>
+
+          {/* password section */}
+          <div className="w-full flex flex-col gap-y-4 p-4 border rounded bg-yellow-50">
+            <div className="flex items-start gap-2 mb-2">
+              <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-yellow-800">Change Password (Optional)</p>
+                <p className="text-xs text-yellow-700 mt-1">Leave blank to keep your current password</p>
+              </div>
+            </div>
+            
+            <label htmlFor="password" className="w-full flex flex-col gap-y-1">
+              <span className="text-sm">New Password</span>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                placeholder="Enter new password (optional)"
+              />
+            </label>
           </div>
 
           {/* submit button */}

@@ -138,7 +138,8 @@ function UpdateCategory({ categoryId }) {
     formData.append("title", categoryTitle);
     formData.append("description", categoryDescription);
 
-    updateCategory({ id: categoryId, data: formData });
+    // FIXED: Use 'body' instead of 'data' to match the API definition
+    updateCategory({ id: categoryId, body: formData });
   }
 
   if (fetchingCategory) {

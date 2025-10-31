@@ -687,35 +687,6 @@ if (data) {
             </select>
           </label>
         </div>
-
-        {/* Optional Store */}
-        <div className="w-full flex flex-col gap-y-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="enableStore"
-              className="rounded"
-              defaultChecked={false}
-            />
-            <label htmlFor="enableStore" className="text-sm font-medium">
-              Associate with Store (Optional)
-            </label>
-          </div>
-          
-          <div id="storeSection" className="hidden">
-            <label htmlFor="store" className="w-full flex flex-col gap-y-1">
-              <span className="text-sm">Store</span>
-              <select name="store" id="store">
-                <option value="">Select Store</option>
-                {stores.map((store) => (
-                  <option key={store._id} value={store._id}>
-                    {store.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </div>
       </div>
 
       {/* Variations - Custom Specs now optional */}

@@ -141,19 +141,50 @@ function UpdateBrand({ brandId }) {
   function handleUpdateBrand(e) {
     e.preventDefault();
 
+    console.log("=== UPDATE BRAND DEBUG START ===");
+    console.log("Brand ID:", brandId);
+    console.log("Brand Title:", brandTitle);
+    console.log("Brand Description:", brandDescription);
+    console.log("Raw Keynotes:", keynotes);
+    console.log("Raw Tags:", tags);
+    console.log("Thumbnail file:", thumbnail);
+
     const formData = new FormData();
     
     // Append the actual file, not the preview
     if (thumbnail) {
       formData.append("logo", thumbnail); // This matches upload.single("logo") in backend
+      console.log("✅ Logo file appended");
+    } else {
+      console.log("⚠️ No new logo file");
     }
     
-    formData.append("keynotes", JSON.stringify(keynotes.filter(note => note.trim() !== "")));
-    formData.append("tags", JSON.stringify(tags.filter(tag => tag.trim() !== "")));
+    // Filter and prepare data
+    const filteredKeynotes = keynotes.filter(note => note.trim() !== "");
+    const filteredTags = tags.filter(tag => tag.trim() !== "");
+    
+    console.log("Filtered Keynotes:", filteredKeynotes);
+    console.log("Filtered Tags:", filteredTags);
+    
+    const keynotesJSON = JSON.stringify(filteredKeynotes);
+    const tagsJSON = JSON.stringify(filteredTags);
+    
+    console.log("Keynotes JSON:", keynotesJSON);
+    console.log("Tags JSON:", tagsJSON);
+    
+    formData.append("keynotes", keynotesJSON);
+    formData.append("tags", tagsJSON);
     formData.append("title", brandTitle);
     formData.append("description", brandDescription);
 
-    updateBrand({ id: brandId, data: formData });
+    console.log("=== FormData Contents ===");
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    console.log("=== UPDATE BRAND DEBUG END ===");
+
+    // FIXED: Use 'body' instead of 'data' to match the API definition
+    updateBrand({ id: brandId, body: formData });
   }
 
   if (fetchingBrand) {

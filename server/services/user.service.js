@@ -1,16 +1,5 @@
 /**
- * Title: Write a program using JavaScript on User Service
- * Author: Hasibul Islam
- * Portfolio: https://devhasibulislam.vercel.app
- * Linkedin: https://linkedin.com/in/devhasibulislam
- * GitHub: https://github.com/devhasibulislam
- * Facebook: https://facebook.com/devhasibulislam
- * Instagram: https:/instagram.com/devhasibulislam
- * Twitter: https://twitter.com/devhasibulislam
- * Pinterest: https://pinterest.com/devhasibulislam
- * WhatsApp: https://wa.me/8801906315901
- * Telegram: devhasibulislam
- * Date: 09, November 2023
+
  */
 
 /* internal imports */
@@ -244,7 +233,7 @@ exports.persistLogin = async (req, res) => {
 };
 
 /* get all users */
-exports.getUsers = async (res) => {
+exports.getUsers = async (req, res) => {
   const users = await User.find().populate("store").populate(["brand", "category", "store"]);
 
   res.status(200).json({
@@ -272,6 +261,14 @@ exports.updateUser = async (req, res) => {
   const existingUser = await User.findById(req.user._id);
   const user = req.body;
 
+  console.log("📝 Self-update request body:", {
+    userId: req.user._id,
+    hasPassword: !!req.body.password,
+    passwordValue: req.body.password,
+    passwordLength: req.body.password?.length,
+    allKeys: Object.keys(req.body)
+  });
+
   if (!req.body.avatar && req.file) {
     await remove(existingUser.avatar?.public_id);
 
@@ -281,6 +278,21 @@ exports.updateUser = async (req, res) => {
     };
   }
 
+  // 🔒 If password is being updated, hash it first
+  if (user.password && user.password.trim() !== "") {
+    console.log("🔐 Hashing new password for self-update");
+    const hashedPassword = existingUser.encryptedPassword(user.password);
+    console.log("🔐 Original password length:", user.password.length);
+    console.log("🔐 Hashed password length:", hashedPassword.length);
+    console.log("🔐 First 20 chars of hash:", hashedPassword.substring(0, 20));
+    user.password = hashedPassword;
+  } else {
+    console.log("⏭️ No password to update, removing from payload");
+    delete user.password;
+  }
+
+  console.log("💾 About to update user with keys:", Object.keys(user));
+
   const updatedUser = await User.findByIdAndUpdate(
     existingUser._id,
     { $set: user },
@@ -288,6 +300,8 @@ exports.updateUser = async (req, res) => {
       runValidators: true,
     }
   );
+
+  console.log("✅ User updated successfully");
 
   res.status(200).json({
     acknowledgement: true,
@@ -298,31 +312,64 @@ exports.updateUser = async (req, res) => {
 
 /* update user information */
 exports.updateUserInfo = async (req, res) => {
-  const existingUser = await User.findById(req.params.id);
-  const user = req.body;
+  try {
+    const existingUser = await User.findById(req.params.id);
+    const user = req.body;
 
-  if (!req.body.avatar && req.file) {
-    await remove(existingUser.avatar?.public_id);
+    console.log("📝 Update user request body:", {
+      hasPassword: !!req.body.password,
+      passwordValue: req.body.password,
+      passwordLength: req.body.password?.length,
+      allKeys: Object.keys(req.body)
+    });
 
-    user.avatar = {
-      url: req.file.path,
-      public_id: req.file.filename,
-    };
-  }
+    if (!req.body.avatar && req.file) {
+      await remove(existingUser.avatar?.public_id);
 
-  const updatedUser = await User.findByIdAndUpdate(
-    existingUser._id,
-    { $set: user },
-    {
-      runValidators: true,
+      user.avatar = {
+        url: req.file.path,
+        public_id: req.file.filename,
+      };
     }
-  );
 
-  res.status(200).json({
-    acknowledgement: true,
-    message: "OK",
-    description: `${updatedUser.name}'s information updated successfully`,
-  });
+    // 🔒 If password is being updated, hash it first
+    if (user.password && user.password.trim() !== "") {
+      console.log("🔐 Hashing new password for admin user update");
+      const hashedPassword = existingUser.encryptedPassword(user.password);
+      console.log("🔐 Original password length:", user.password.length);
+      console.log("🔐 Hashed password length:", hashedPassword.length);
+      user.password = hashedPassword;
+    } else {
+      console.log("⏭️ No password to update, removing from payload");
+      delete user.password;
+    }
+
+    console.log("💾 Updating user with data:", { ...user, password: user.password ? '[HASHED]' : undefined });
+
+    const updatedUser = await User.findByIdAndUpdate(
+      existingUser._id,
+      { $set: user },
+      {
+        runValidators: true,
+        new: true, // Return the updated document
+      }
+    );
+
+    console.log("✅ User updated in DB. Password hash starts with:", updatedUser.password?.substring(0, 20));
+
+    res.status(200).json({
+      acknowledgement: true,
+      message: "OK",
+      description: `${updatedUser.name}'s information updated successfully`,
+    });
+  } catch (error) {
+    console.error("❌ Error updating user:", error);
+    res.status(500).json({
+      acknowledgement: false,
+      message: "Error",
+      description: error.message || "Failed to update user",
+    });
+  }
 };
 
 /* delete user information */
@@ -459,55 +506,123 @@ exports.deleteUser = async (req, res) => {
 
 /* add user by admin */
 exports.addUser = async (req, res) => {
-  const { body, file } = req;
+  try {
+    const { body, file } = req;
 
-  // Check if user already exists
-  const existingUser = await User.findOne({ email: body.email });
-  if (existingUser) {
-    return res.status(409).json({
+    console.log("📝 Adding user:", { 
+      name: body.name, 
+      email: body.email, 
+      role: body.role, 
+      phone: body.phone,
+      phoneType: typeof body.phone,
+      phoneLength: body.phone ? body.phone.length : 0,
+      phoneTrimmed: body.phone ? body.phone.trim() : null
+    });
+
+    // Check if email already exists
+    const existingEmail = await User.findOne({ email: body.email });
+    if (existingEmail) {
+      return res.status(409).json({
+        acknowledgement: false,
+        message: "Conflict",
+        description: "A user with this email already exists",
+      });
+    }
+
+    // Check if phone already exists (for non-admin users)
+    // Only check if phone is provided and not empty, and role is not admin
+    console.log("📞 Phone check:", {
+      hasPhone: !!body.phone,
+      phoneValue: body.phone,
+      isAdmin: body.role === "admin",
+      willCheckPhone: body.phone && body.phone.trim() !== "" && body.role !== "admin"
+    });
+    
+    if (body.phone && body.phone.trim() !== "" && body.role !== "admin") {
+      console.log("🔍 Checking for duplicate phone:", body.phone);
+      const existingPhone = await User.findOne({ phone: body.phone });
+      if (existingPhone) {
+        console.log("❌ Found duplicate phone for user:", existingPhone._id);
+        return res.status(409).json({
+          acknowledgement: false,
+          message: "Conflict",
+          description: "A user with this phone number already exists",
+        });
+      }
+      console.log("✅ Phone is unique");
+    } else {
+      console.log("⏭️ Skipping phone check");
+    }
+
+    // Create a new user instance
+    const user = new User({
+      name: body.name,
+      email: body.email,
+      password: body.password,
+      role: body.role || "buyer",
+      status: "active",
+    });
+
+    // Only add phone for non-admin users (and only if phone is provided and not empty)
+    if (body.phone && body.phone.trim() !== "" && body.role !== "admin") {
+      user.phone = body.phone;
+    }
+
+    if (file) {
+      user.avatar = {
+        url: file.path,
+        public_id: file.filename,
+      };
+    }
+
+    await user.save();
+
+    console.log("✅ User created successfully:", user._id);
+
+    res.status(201).json({
+      acknowledgement: true,
+      message: "Created",
+      description: "User created successfully by admin",
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      },
+    });
+
+    return user;
+  } catch (error) {
+    console.error("❌ Error creating user:", error);
+
+    // Handle validation errors
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        acknowledgement: false,
+        message: "Validation Error",
+        description: errors.join(", "),
+      });
+    }
+
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(409).json({
+        acknowledgement: false,
+        message: "Conflict",
+        description: `A user with this ${field} already exists`,
+      });
+    }
+
+    // Generic error
+    return res.status(500).json({
       acknowledgement: false,
-      message: "Conflict",
-      description: "User with this email already exists",
+      message: "Internal Server Error",
+      description: error.message || "Failed to create user",
     });
   }
-
-  // Create a new user instance
-  const user = new User({
-    name: body.name,
-    email: body.email,
-    password: body.password,
-    role: body.role || "buyer", // Allow admin to set role
-    status: "active", // Admin-created users are active by default
-  });
-
-  // Only add phone for non-admin users
-  if (body.phone && body.role !== "admin") {
-    user.phone = body.phone;
-  }
-
-  if (file) {
-    user.avatar = {
-      url: file.path,
-      public_id: file.filename,
-    };
-  }
-
-  await user.save();
-
-  res.status(201).json({
-    acknowledgement: true,
-    message: "Created",
-    description: "User created successfully by admin",
-    data: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-    },
-  });
-
-  return user;
 };
 
 // seller request & approve

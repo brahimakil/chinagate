@@ -94,20 +94,20 @@ const Dashboard = ({ children }) => {
           },
         ],
       },
-      {
-        name: "Store Management",
-        icon: "🏪",
-        paths: [
-          {
-            name: "➕ Add Store", 
-            path: "/dashboard/admin/add-store",
-          },
-          {
-            name: "📋 Manage Stores",
-            path: "/dashboard/admin/list-stores",
-          },
-        ],
-      },
+      // {
+      //   name: "Store Management",
+      //   icon: "🏪",
+      //   paths: [
+      //     {
+      //       name: "➕ Add Store", 
+      //       path: "/dashboard/admin/add-store",
+      //     },
+      //     {
+      //       name: "📋 Manage Stores",
+      //       path: "/dashboard/admin/list-stores",
+      //     },
+      //   ],
+      // },
       {
         name: "Product Management",
         icon: "📦",
