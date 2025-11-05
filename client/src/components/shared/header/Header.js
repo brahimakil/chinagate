@@ -15,6 +15,7 @@ import { useGetCategoriesQuery } from "@/services/category/categoryApi";
 import { useGetBrandsQuery } from "@/services/brand/brandApi";
 import { useGetStoresQuery } from "@/services/store/storeApi";
 import { useGetProductsQuery } from "@/services/product/productApi";
+import { useGetSectionsQuery } from "@/services/section/sectionApi";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 
@@ -29,11 +30,13 @@ const Header = () => {
   const { data: brandsData } = useGetBrandsQuery();
   const { data: storesData } = useGetStoresQuery();
   const { data: productsData } = useGetProductsQuery();
+  const { data: sectionsData } = useGetSectionsQuery();
 
   const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
   const brands = useMemo(() => brandsData?.data || [], [brandsData]);
   const stores = useMemo(() => storesData?.data || [], [storesData]);
   const products = useMemo(() => productsData?.data || [], [productsData]);
+  const sections = useMemo(() => sectionsData?.data || [], [sectionsData]);
 
   const categoriesWithProductCount = useMemo(() => {
     return categories.map(category => ({
@@ -126,10 +129,14 @@ const Header = () => {
                   </button>
                   
                   {/* Categories Dropdown Menu */}
-                  <div className="absolute left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
+                  <div className={`absolute left-0 mt-2 bg-white rounded-lg shadow-xl border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 ${
+                    categoriesWithProductCount.slice(0, 8).length > 3 ? 'w-[600px]' : 'w-80'
+                  }`}>
                     <div className="p-4">
                       <h3 className="text-sm font-semibold text-gray-900 mb-3">Browse Categories</h3>
-                      <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto">
+                      <div className={`grid gap-2 max-h-80 overflow-y-auto ${
+                        categoriesWithProductCount.slice(0, 8).length > 3 ? 'grid-cols-2' : 'grid-cols-1'
+                      }`}>
                         {categoriesWithProductCount.slice(0, 8).map((category) => (
                           <button
                             key={category._id}
@@ -152,7 +159,9 @@ const Header = () => {
                         {categories.length > 8 && (
                           <button
                             onClick={() => router.push('/categories')} // FIXED: Go to categories page
-                            className="text-center py-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            className={`text-center py-2 text-sm text-blue-600 hover:text-blue-700 font-medium ${
+                              categoriesWithProductCount.slice(0, 8).length > 3 ? 'col-span-2' : ''
+                            }`}
                           >
                             View All Categories →
                           </button>
@@ -172,17 +181,21 @@ const Header = () => {
                   </button>
                   
                   {/* Brands Dropdown Menu */}
-                  <div className="absolute left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
+                  <div className={`absolute left-0 mt-2 bg-white rounded-lg shadow-xl border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 ${
+                    brandsWithProductCount.slice(0, 8).length > 3 ? 'w-[600px]' : 'w-80'
+                  }`}>
                     <div className="p-4">
                       <h3 className="text-sm font-semibold text-gray-900 mb-3">Popular Brands</h3>
-                      <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto">
+                      <div className={`grid gap-2 max-h-80 overflow-y-auto ${
+                        brandsWithProductCount.slice(0, 8).length > 3 ? 'grid-cols-2' : 'grid-cols-1'
+                      }`}>
                         {brandsWithProductCount.slice(0, 8).map((brand) => (
                           <button
                             key={brand._id}
                             onClick={() => router.push(`/collections/all?brand=${brand._id}`)} // CORRECT: Individual brand filter
                             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left w-full"
                           >
-          <Image
+                            <Image
                               src={brand.logo?.url}
                               alt={brand.title}
                               width={32}
@@ -198,7 +211,9 @@ const Header = () => {
                         {brandsWithProductCount.length > 8 && (
                           <button
                             onClick={() => router.push('/brands')} // FIXED: Go to brands page
-                            className="text-center py-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            className={`text-center py-2 text-sm text-blue-600 hover:text-blue-700 font-medium ${
+                              brandsWithProductCount.slice(0, 8).length > 3 ? 'col-span-2' : ''
+                            }`}
                           >
                             View All Brands →
                           </button>
@@ -222,127 +237,66 @@ const Header = () => {
                     <div className="p-4">
                       <h3 className="text-sm font-semibold text-gray-900 mb-3">Shop by Collection</h3>
                       <div className="space-y-2">
-                        {/* Seasonal Products - FIXED */}
-                        {(() => {
-                          const savedSeasons = typeof window !== 'undefined' ? localStorage.getItem('homePageSeasons') : null;
-                          const selectedSeasons = savedSeasons ? JSON.parse(savedSeasons) : ['winter'];
-                          const seasonalCount = products.filter(product => {
-                            if (!product.isHidden) {
-                              if (Array.isArray(product.season)) {
-                                return product.season.some(productSeason => selectedSeasons.includes(productSeason));
-                              } else {
-                                return selectedSeasons.includes(product.season) || product.season === "all-season";
+                        {/* Dynamic Sections from Database */}
+                        {sections
+                          .filter(section => section.isActive && section.sectionCategory === "product")
+                          .sort((a, b) => a.order - b.order)
+                          .map((section) => {
+                            // Calculate product count for this section
+                            const productCount = products.filter(product => {
+                              if (product.isHidden) return false;
+                              
+                              // Handle seasonal sections
+                              if (section.filterKey === "seasonal" && section.seasons && section.seasons.length > 0) {
+                                if (Array.isArray(product.season)) {
+                                  return product.season.some(productSeason => section.seasons.includes(productSeason));
+                                } else {
+                                  return section.seasons.includes(product.season);
+                                }
                               }
-                            }
-                            return false;
-                          }).length;
-                          
-                          if (seasonalCount > 0) {
+                              
+                              // Handle other sections (featured, trending, etc.)
+                              if (Array.isArray(product.productStatus)) {
+                                return product.productStatus.includes(section.filterKey);
+                              } else {
+                                return product.productStatus === section.filterKey;
+                              }
+                            }).length;
+                            
+                            // Only show section if it has products
+                            if (productCount === 0) return null;
+                            
                             return (
                               <button
-                                onClick={() => router.push('/collections/seasonal')}
+                                key={section._id}
+                                onClick={() => router.push(`/collections/${section.filterKey}`)}
                                 className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                                style={{ 
+                                  backgroundColor: `${section.color}10`,
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = `${section.color}20`;
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = `${section.color}10`;
+                                }}
                               >
                                 <div className="flex items-center space-x-3">
-                                  <span className="text-2xl">🌍</span>
-                                  <span className="text-gray-700">Seasonal Collection</span>
+                                  <span className="text-2xl">{section.icon || '📦'}</span>
+                                  <span className="text-gray-700">{section.displayName}</span>
                                 </div>
-                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{seasonalCount}</span>
+                                <span 
+                                  className="text-xs px-2 py-1 rounded-full font-medium"
+                                  style={{ 
+                                    backgroundColor: `${section.color}30`,
+                                    color: section.color
+                                  }}
+                                >
+                                  {productCount}
+                                </span>
                               </button>
                             );
-                          }
-                          return null;
-                        })()}
-
-                        {/* Featured Products - FIXED */}
-                        {(() => {
-                          const featuredCount = products.filter(product => {
-                            if (!product.isHidden) {
-                              if (Array.isArray(product.productStatus)) {
-                                return product.productStatus.includes("featured");
-                              } else {
-                                return product.productStatus === "featured";
-                              }
-                            }
-                            return false;
-                          }).length;
-                          
-                          if (featuredCount > 0) {
-                            return (
-                              <button
-                                onClick={() => router.push('/collections/featured')}
-                                className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-blue-50 transition-colors text-left"
-                              >
-                                <div className="flex items-center space-x-3">
-                                  <span className="text-2xl">⭐</span>
-                                  <span className="text-gray-700">Featured Products</span>
-                                </div>
-                                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">{featuredCount}</span>
-                              </button>
-                            );
-                          }
-                          return null;
-                        })()}
-
-                        {/* Trending Products - FIXED */}
-                        {(() => {
-                          const trendingCount = products.filter(product => {
-                            if (!product.isHidden) {
-                              if (Array.isArray(product.productStatus)) {
-                                return product.productStatus.includes("trending");
-                              } else {
-                                return product.productStatus === "trending";
-                              }
-                            }
-                            return false;
-                          }).length;
-                          
-                          if (trendingCount > 0) {
-                            return (
-                              <button
-                                onClick={() => router.push('/collections/trending')}
-                                className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-green-50 transition-colors text-left"
-                              >
-                                <div className="flex items-center space-x-3">
-                                  <span className="text-2xl">🔥</span>
-                                  <span className="text-gray-700">Trending Products</span>
-        </div>
-                                <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">{trendingCount}</span>
-                              </button>
-                            );
-                          }
-                          return null;
-                        })()}
-
-                        {/* Best Sellers - FIXED */}
-                        {(() => {
-                          const bestSellerCount = products.filter(product => {
-                            if (!product.isHidden) {
-                              if (Array.isArray(product.productStatus)) {
-                                return product.productStatus.includes("best-seller");
-                              } else {
-                                return product.productStatus === "best-seller";
-                              }
-                            }
-                            return false;
-                          }).length;
-                          
-                          if (bestSellerCount > 0) {
-                            return (
-            <button
-                                onClick={() => router.push('/collections/best-sellers')}
-                                className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-red-50 transition-colors text-left"
-                              >
-                                <div className="flex items-center space-x-3">
-                                  <span className="text-2xl">🏆</span>
-                                  <span className="text-gray-700">Best Sellers</span>
-                                </div>
-                                <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">{bestSellerCount}</span>
-                              </button>
-                            );
-                          }
-                          return null;
-                        })()}
+                          })}
                       </div>
                     </div>
                   </div>
