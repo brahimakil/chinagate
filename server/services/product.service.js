@@ -24,91 +24,209 @@ const User = require("../models/user.model");
 
 /* add product information */
 exports.addProduct = async (req, res) => {
-  const { 
-    features, variations, socialLinks, season, productStatus, isHidden, 
-    enableColors, enableCustomSpecs, enableSocialLinks, enableStore,
-    colorImageNames, // 🆕 Track which colors have images
-    ...otherInformation 
-  } = req.body;
-  const { thumbnail, gallery, colorImages } = req.files || {};
-
-  console.log('📝 Adding product with color images:', {
-    colorImageNames: colorImageNames,
-    colorImagesCount: colorImages?.length || 0
-  });
-
-  const productInformation = {
-    ...otherInformation,
-    thumbnail: {
-      url: thumbnail[0].path,
-      public_id: thumbnail[0].filename,
-    },
-    gallery: gallery.map((file) => ({
-      url: file.path,
-      public_id: file.filename,
-    })),
-    features: JSON.parse(features || "[]"),
-    variations: JSON.parse(variations || "{}"),
-    socialLinks: socialLinks ? JSON.parse(socialLinks) : [],
-    season: season ? JSON.parse(season) : ["all-season"],
-    productStatus: productStatus ? JSON.parse(productStatus) : ["regular"],
-    isHidden: isHidden === 'true',
+  // Declare variables outside try blocks for proper scope
+  let productInformation;
+  let otherInformation;
+  let colorImageNames;
+  let colorImages;
+  
+  try {
+    console.log('🚀 ========== START ADD PRODUCT ==========');
+    console.log('📦 Request body keys:', Object.keys(req.body));
+    console.log('📁 Request files:', req.files ? Object.keys(req.files) : 'No files');
     
-    // Save toggle states
-    enableColors: enableColors === 'true',
-    enableCustomSpecs: enableCustomSpecs === 'true',
-    enableSocialLinks: enableSocialLinks === 'true',
-    enableStore: enableStore === 'true',
-  };
+    const { 
+      features, variations, socialLinks, season, productStatus, isHidden, 
+      enableColors, enableCustomSpecs, enableSocialLinks, enableStore,
+      colorImageNames: colorImageNamesParam, // 🆕 Track which colors have images
+      ...otherInfo 
+    } = req.body;
+    
+    otherInformation = otherInfo;
+    colorImageNames = colorImageNamesParam;
+    
+    const { thumbnail, gallery, colorImages: colorImagesParam } = req.files || {};
+    colorImages = colorImagesParam;
 
-  // 🆕 Attach images to colors
-  if (productInformation.variations.colors && Array.isArray(productInformation.variations.colors)) {
-    const colorNamesArray = Array.isArray(colorImageNames) ? colorImageNames : (colorImageNames ? [colorImageNames] : []);
-    const colorImagesArray = colorImages || [];
-
-    console.log('🎨 Processing color images:', {
-      colorNames: colorNamesArray,
-      imagesCount: colorImagesArray.length
+    console.log('📝 Parsed request data:', {
+      hasThumbnail: !!thumbnail,
+      thumbnailCount: thumbnail?.length || 0,
+      hasGallery: !!gallery,
+      galleryType: gallery ? typeof gallery : 'undefined',
+      galleryIsArray: Array.isArray(gallery),
+      galleryCount: gallery?.length || 0,
+      colorImagesCount: colorImages?.length || 0,
+      colorImageNames: colorImageNames,
+      features: features,
+      variations: variations,
+      socialLinks: socialLinks
     });
 
-    productInformation.variations.colors = productInformation.variations.colors.map(color => {
-      // Find the index of this color in colorImageNames
-      const imageIndex = colorNamesArray.findIndex(name => name === color.name);
-      
-      if (imageIndex !== -1 && colorImagesArray[imageIndex]) {
-        const imageFile = colorImagesArray[imageIndex];
-        console.log(`✅ Attaching image to color: ${color.name}`);
-        return {
-          ...color,
-          image: {
-            url: imageFile.path,
-            public_id: imageFile.filename,
-          }
-        };
-      }
-      
-      return color;
-    });
+    // Validate required thumbnail
+    if (!thumbnail || !thumbnail[0]) {
+      console.log('❌ Thumbnail validation failed');
+      return res.status(400).json({
+        acknowledgement: false,
+        message: "Bad Request",
+        description: "Product thumbnail is required"
+      });
+    }
 
-    // Save colors to top-level field
-    productInformation.colors = productInformation.variations.colors;
+    console.log('✅ Thumbnail validated');
+    console.log('🔄 Processing gallery...');
+    
+    let processedGallery = [];
+    if (gallery && Array.isArray(gallery)) {
+      console.log(`✅ Gallery is array with ${gallery.length} items`);
+      processedGallery = gallery.map((file) => ({
+        url: file.path,
+        public_id: file.filename,
+      }));
+      console.log('✅ Gallery processed successfully');
+    } else {
+      console.log('⚠️ No gallery or gallery is not an array');
+    }
+
+    console.log('🔄 Parsing features...');
+    let parsedFeatures;
+    try {
+      parsedFeatures = JSON.parse(features || "[]");
+      console.log('✅ Features parsed:', parsedFeatures);
+    } catch (error) {
+      console.log('❌ Error parsing features:', error.message);
+      parsedFeatures = [];
+    }
+
+    console.log('🔄 Parsing variations...');
+    let parsedVariations;
+    try {
+      parsedVariations = JSON.parse(variations || "{}");
+      console.log('✅ Variations parsed:', parsedVariations);
+    } catch (error) {
+      console.log('❌ Error parsing variations:', error.message);
+      parsedVariations = {};
+    }
+
+    console.log('🔄 Parsing socialLinks...');
+    let parsedSocialLinks;
+    try {
+      parsedSocialLinks = socialLinks ? JSON.parse(socialLinks) : [];
+      console.log('✅ SocialLinks parsed:', parsedSocialLinks);
+    } catch (error) {
+      console.log('❌ Error parsing socialLinks:', error.message);
+      parsedSocialLinks = [];
+    }
+
+    // Assign to outer scope variable
+    productInformation = {
+      ...otherInformation,
+      thumbnail: {
+        url: thumbnail[0].path,
+        public_id: thumbnail[0].filename,
+      },
+      gallery: processedGallery,
+      features: parsedFeatures,
+      variations: parsedVariations,
+      socialLinks: parsedSocialLinks,
+      season: season ? JSON.parse(season) : ["all-season"],
+      productStatus: productStatus ? JSON.parse(productStatus) : ["regular"],
+      isHidden: isHidden === 'true',
+      
+      // Save toggle states
+      enableColors: enableColors === 'true',
+      enableCustomSpecs: enableCustomSpecs === 'true',
+      enableSocialLinks: enableSocialLinks === 'true',
+      enableStore: enableStore === 'true',
+    };
+
+    console.log('✅ Product information object created');
+    console.log('📋 Product info summary:', {
+      hasGallery: !!productInformation.gallery,
+      galleryLength: productInformation.gallery?.length,
+      hasVariations: !!productInformation.variations,
+      hasColors: !!productInformation.variations?.colors,
+      colorsLength: productInformation.variations?.colors?.length
+    });
+  } catch (error) {
+    console.log('❌ ERROR in addProduct (before colors processing):', error.message);
+    console.log('❌ Stack trace:', error.stack);
+    return res.status(500).json({
+      acknowledgement: false,
+      message: "Error",
+      description: error.message
+    });
   }
 
-  const product = new Product(productInformation);
-  await product.save();
+  try {
+    console.log('🔄 Processing colors...');
+    // 🆕 Attach images to colors
+    if (productInformation.variations.colors && Array.isArray(productInformation.variations.colors)) {
+      const colorNamesArray = Array.isArray(colorImageNames) ? colorImageNames : (colorImageNames ? [colorImageNames] : []);
+      const colorImagesArray = colorImages || [];
 
-  // Update store if provided
-  if (otherInformation.store) {
-    await Store.findByIdAndUpdate(otherInformation.store, {
-      $push: { products: product._id },
+      console.log('🎨 Processing color images:', {
+        colorNames: colorNamesArray,
+        imagesCount: colorImagesArray.length,
+        colorsCount: productInformation.variations.colors.length
+      });
+
+      productInformation.variations.colors = productInformation.variations.colors.map(color => {
+        // Find the index of this color in colorImageNames
+        const imageIndex = colorNamesArray.findIndex(name => name === color.name);
+        
+        if (imageIndex !== -1 && colorImagesArray[imageIndex]) {
+          const imageFile = colorImagesArray[imageIndex];
+          console.log(`✅ Attaching image to color: ${color.name}`);
+          return {
+            ...color,
+            image: {
+              url: imageFile.path,
+              public_id: imageFile.filename,
+            }
+          };
+        }
+        
+        return color;
+      });
+
+      // Save colors to top-level field
+      productInformation.colors = productInformation.variations.colors;
+      console.log('✅ Colors processed and saved to top-level');
+    } else {
+      console.log('⚠️ No colors to process');
+    }
+
+    console.log('🔄 Creating product instance...');
+    const product = new Product(productInformation);
+    
+    console.log('💾 Saving product to database...');
+    await product.save();
+    console.log('✅ Product saved successfully with ID:', product._id);
+
+    // Update store if provided
+    if (otherInformation.store) {
+      console.log('🔄 Updating store with product ID...');
+      await Store.findByIdAndUpdate(otherInformation.store, {
+        $push: { products: product._id },
+      });
+      console.log('✅ Store updated');
+    }
+
+    console.log('✅ ========== PRODUCT ADDED SUCCESSFULLY ==========');
+    res.status(201).json({
+      acknowledgement: true,
+      message: "Created",
+      description: "Product created successfully with color images",
+    });
+  } catch (error) {
+    console.log('❌ ERROR in addProduct (during save/colors):', error.message);
+    console.log('❌ Stack trace:', error.stack);
+    return res.status(500).json({
+      acknowledgement: false,
+      message: "Error",
+      description: error.message
     });
   }
-
-  res.status(201).json({
-    acknowledgement: true,
-    message: "Created",
-    description: "Product created successfully with color images",
-  });
 };
 
 /* get all products */
@@ -270,10 +388,10 @@ exports.updateProduct = async (req, res) => {
       await remove(product.gallery[i].public_id);
     }
 
-    updateData.gallery = req.files.gallery.map((file) => ({
+    updateData.gallery = req.files.gallery && Array.isArray(req.files.gallery) ? req.files.gallery.map((file) => ({
       url: file.path,
       public_id: file.filename,
-    }));
+    })) : [];
   }
 
   // Handle JSON parsing safely
