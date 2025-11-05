@@ -1,16 +1,4 @@
 /**
- * Title: Write a program using JavaScript on Card
- * Author: Hasibul Islam
- * Portfolio: https://devhasibulislam.vercel.app
- * Linkedin: https://linkedin.com/in/devhasibulislam
- * GitHub: https://github.com/devhasibulislam
- * Facebook: https://facebook.com/devhasibulislam
- * Instagram: https://instagram.com/devhasibulislam
- * Twitter: https://twitter.com/devhasibulislam
- * Pinterest: https://pinterest.com/devhasibulislam
- * WhatsApp: https://wa.me/8801906315901
- * Telegram: devhasibulislam
- * Date: 15, October 2023
  */
 
 "use client";
@@ -146,11 +134,24 @@ const Card = ({ index, product, ...rest }) => {
    
       </div>
 
-      {/* Brand Name */}
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-medium text-gray-800 truncate">
-          {product?.brand?.title || product?.title}
+      {/* Product Title */}
+      <div className="text-center mb-2">
+        <h3 className="text-lg font-semibold text-gray-900 truncate">
+          {product?.title}
         </h3>
+      </div>
+
+      {/* Brand & Category */}
+      <div className="text-center mb-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+        {product?.brand?.title && (
+          <>
+            <span className="font-medium">{product.brand.title}</span>
+            {product?.category?.title && <span>•</span>}
+          </>
+        )}
+        {product?.category?.title && (
+          <span>{product.category.title}</span>
+        )}
       </div>
 
       {/* Specification & Color Section */}

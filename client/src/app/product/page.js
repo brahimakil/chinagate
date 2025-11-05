@@ -141,11 +141,11 @@ const ProductDetail = () => {
     }
   }, [settingsData]);
 
-  // Smooth zoom handler - NO LAG
+  // Smooth zoom handler - Fixed calculation
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
     setMousePos({ x, y });
   };
 
@@ -570,30 +570,33 @@ const ProductDetail = () => {
               <div className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden">
                 <div 
                   className={`relative w-full h-full group ${
-                    isMobile ? 'cursor-pointer' : 'cursor-zoom-in'
-                  }`}
+                    isMobile ? 'cursor-pointer active:scale-95' : 'cursor-zoom-in'
+                  } transition-transform duration-150`}
                   onClick={handleImageClick}
                   onMouseEnter={() => !isMobile && setIsZooming(true)}
                   onMouseLeave={() => !isMobile && setIsZooming(false)}
                   onMouseMove={!isMobile ? handleMouseMove : undefined}
                 >
-                  {/* Main Image - NO TRANSFORM, NO LAG */}
+                  {/* Main Image */}
                   <Image
                     src={allImages[selectedImage]?.url}
                     alt={product.title}
                     fill
-                    className="object-cover"
+                    className={`object-contain p-4 transition-opacity duration-200 ${
+                      !isMobile && isZooming ? 'opacity-0' : 'opacity-100'
+                    }`}
                     priority
                   />
                   
-                  {/* Desktop Zoom Overlay - This is where the magic happens */}
+                  {/* Desktop Zoom Overlay - Smooth and responsive */}
                   {!isMobile && isZooming && (
                     <div 
-                      className="absolute inset-0 bg-no-repeat pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      className="absolute inset-0 bg-no-repeat pointer-events-none"
                       style={{
                         backgroundImage: `url(${allImages[selectedImage]?.url})`,
-                        backgroundSize: '200%',
-                        backgroundPosition: `${(mousePos.x / 400) * 100}% ${(mousePos.y / 400) * 100}%`,
+                        backgroundSize: '250%',
+                        backgroundPosition: `${mousePos.x}% ${mousePos.y}%`,
+                        transition: 'background-position 0.1s ease-out',
                       }}
                     />
                   )}
@@ -699,7 +702,6 @@ const ProductDetail = () => {
               {/* Price */}
               <div className="flex items-baseline space-x-3">
                 <span className="text-3xl font-bold text-gray-900">${product.price}</span>
-                <span className="text-sm text-gray-500">Free shipping</span>
               </div>
 
                    {/* Action Buttons */}

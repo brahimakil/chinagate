@@ -14,12 +14,13 @@
  */
 
 import Cart from "@/components/icons/Cart";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import OutsideClick from "../OutsideClick";
 import Image from "next/image";
 import { useSelector } from "react-redux";
 import Trash from "@/components/icons/Trash";
 import { useDeleteFromCartMutation, useUpdateCartMutation } from "@/services/cart/cartApi";
+import { useGetSystemSettingsQuery } from "@/services/system/systemApi";
 import { toast } from "react-hot-toast";
 import Inform from "@/components/icons/Inform";
 import { useCreatePaymentMutation } from "@/services/payment/paymentApi";
@@ -29,6 +30,7 @@ import { useRouter } from "next/navigation";
 const MyCart = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useSelector((state) => state.auth);
+  const { data: settingsData } = useGetSystemSettingsQuery();
   const [removeFromCart, { isLoading, data, error }] =
     useDeleteFromCartMutation();
   
@@ -36,6 +38,17 @@ const MyCart = () => {
     updateCart,
     { isLoading: isUpdating, data: updateData, error: updateError },
   ] = useUpdateCartMutation();
+
+  // Calculate subtotal
+  const subtotal = useMemo(() => {
+    if (!user?.cart) return 0;
+    return user.cart
+      .filter((item) => item.product !== null)
+      .reduce((sum, { product, quantity }) => sum + (product?.price || 0) * quantity, 0);
+  }, [user?.cart]);
+
+  const deliveryTax = settingsData?.data?.deliveryTax || 0;
+  const total = subtotal + deliveryTax;
 
   useEffect(() => {
     if (isLoading) {
@@ -149,9 +162,7 @@ const MyCart = () => {
                             </div>
                           </p>
                           <div className="flex flex-row gap-x-1">
-                            <span className="whitespace-nowrap text-[10px] bg-purple-300/50 text-purple-500 border border-purple-500 px-1.5 rounded">
-                              {product?.store?.title}
-                            </span>
+                          
                             <span className="whitespace-nowrap text-[10px] bg-indigo-300/50 text-indigo-500 border border-indigo-500 px-1.5 rounded">
                               {product?.brand?.title}
                             </span>
@@ -172,6 +183,25 @@ const MyCart = () => {
                       </div>
                     ))}
                 </div>
+
+                {/* Cart Summary */}
+                <div className="border-t pt-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Delivery Tax</span>
+                    <span className="font-medium">
+                      {deliveryTax > 0 ? `$${deliveryTax.toFixed(2)}` : <span className="text-green-600">Free</span>}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="font-semibold">Total</span>
+                    <span className="text-lg font-bold text-blue-600">${total.toFixed(2)}</span>
+                  </div>
+                </div>
+
                 <Purchase cart={user?.cart} />
               </div>
             )}

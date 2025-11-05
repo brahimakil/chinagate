@@ -29,6 +29,8 @@ import {
   useGetProductsQuery,
 } from "@/services/product/productApi";
 import { useRemoveReviewMutation } from "@/services/review/reviewApi";
+import { useGetCategoriesQuery } from "@/services/category/categoryApi";
+import { useGetBrandsQuery } from "@/services/brand/brandApi";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
@@ -41,8 +43,20 @@ const ListProducts = () => {
     error: productsError,
     isLoading: productsLoading,
   } = useGetProductsQuery();
+  const { data: categoriesData } = useGetCategoriesQuery();
+  const { data: brandsData } = useGetBrandsQuery();
+  
   const products = useMemo(() => productsData?.data || [], [productsData]);
+  const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
+  const brands = useMemo(() => brandsData?.data || [], [brandsData]);
   const dispatch = useDispatch();
+
+  // Search and Pagination states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (productsLoading) {
@@ -60,16 +74,178 @@ const ListProducts = () => {
     dispatch(setProducts(products));
   }, [productsError, productsData, productsLoading, dispatch, products]);
 
+  // Filter products based on search query, category, and brand
+  const filteredProducts = useMemo(() => {
+    let filtered = products;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.title?.toLowerCase().includes(query) ||
+        product.category?.title?.toLowerCase().includes(query) ||
+        product.brand?.title?.toLowerCase().includes(query) ||
+        product.store?.title?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply category filter
+    if (selectedCategory) {
+      filtered = filtered.filter(product => product.category?._id === selectedCategory);
+    }
+    
+    // Apply brand filter
+    if (selectedBrand) {
+      filtered = filtered.filter(product => product.brand?._id === selectedBrand);
+    }
+    
+    return filtered;
+  }, [products, searchQuery, selectedCategory, selectedBrand]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedBrand]);
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("");
+    setSelectedBrand("");
+  };
+
+  const hasActiveFilters = searchQuery || selectedCategory || selectedBrand;
+
   return (
     <Dashboard>
-      {products?.length === 0 ? (
-        <p className="text-sm flex flex-row gap-x-1 items-center justify-center">
-          <Inform /> No Products Found!
-        </p>
-      ) : (
-        <section className="w-full h-full">
-          <div className="overflow-x-auto w-full">
-            <table className="min-w-full divide-y divide-gray-200">
+      <section className="w-full h-full space-y-4">
+        {/* Header with Add Product Button */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Products List</h1>
+            <p className="text-sm text-gray-600 mt-1">Manage all products in your store</p>
+          </div>
+          <Link
+            href="/dashboard/admin/add-product"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Product
+          </Link>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Search Input */}
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Search by title, category, brand, or store..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  title="Clear search"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Category Filter */}
+            <div className="w-full lg:w-56">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Brand Filter */}
+            <div className="w-full lg:w-56">
+              <select
+                value={selectedBrand}
+                onChange={(e) => setSelectedBrand(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Brands</option>
+                {brands.map((brand) => (
+                  <option key={brand._id} value={brand._id}>
+                    {brand.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+
+          {/* Results Summary */}
+          <div className="flex items-center justify-between text-sm text-gray-600 pt-2 border-t border-gray-100">
+            <div>
+              Showing <span className="font-semibold">{currentProducts.length}</span> of <span className="font-semibold">{filteredProducts.length}</span> products
+              {hasActiveFilters && <span className="text-blue-600"> (filtered from {products.length} total)</span>}
+            </div>
+            {hasActiveFilters && (
+              <div className="flex gap-2 flex-wrap">
+                {searchQuery && (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                    Search: "{searchQuery}"
+                  </span>
+                )}
+                {selectedCategory && (
+                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                    {categories.find(c => c._id === selectedCategory)?.title}
+                  </span>
+                )}
+                {selectedBrand && (
+                  <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                    {brands.find(b => b._id === selectedBrand)?.title}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {filteredProducts?.length === 0 ? (
+          <p className="text-sm flex flex-row gap-x-1 items-center justify-center py-8">
+            <Inform /> {searchQuery ? `No products found matching "${searchQuery}"` : 'No Products Found!'}
+          </p>
+        ) : (
+          <>
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-slate-100">
                 <tr>
                   <th
@@ -129,7 +305,7 @@ const ListProducts = () => {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
+                {currentProducts.map((product) => (
                   <tr
                     key={product?._id}
                     className="odd:bg-white even:bg-gray-100 hover:odd:bg-gray-100"
@@ -208,8 +384,70 @@ const ListProducts = () => {
               </tbody>
             </table>
           </div>
-        </section>
-      )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                
+                <div className="hidden sm:flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, index) => {
+                    const pageNum = index + 1;
+                    // Show first, last, current, and adjacent pages
+                    if (
+                      pageNum === 1 ||
+                      pageNum === totalPages ||
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-1 text-sm border rounded ${
+                            currentPage === pageNum
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : 'border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    } else if (
+                      pageNum === currentPage - 2 ||
+                      pageNum === currentPage + 2
+                    ) {
+                      return <span key={pageNum} className="px-2">...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+          </>
+        )}
+      </section>
     </Dashboard>
   );
 };
