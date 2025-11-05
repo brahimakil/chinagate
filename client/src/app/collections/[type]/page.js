@@ -56,11 +56,97 @@ const CollectionPage = () => {
   const settings = settingsData?.data;
 
   // Extract all unique colors from products
+  // 🆕 This now depends on the current filters to show only relevant colors
   const availableColors = useMemo(() => {
     const colorSet = new Set();
     const colorObjects = [];
     
-    products.forEach(product => {
+    // First, filter products based on category/brand/type (before color and spec filters)
+    let relevantProducts = products.filter(product => {
+      // Skip hidden products
+      if (product.isHidden) return false;
+
+      // Filter by collection type
+      const customSection = sections.find(s => s.filterKey === type);
+      
+      if (customSection) {
+        if (customSection.filterKey === "seasonal" && customSection.seasons && customSection.seasons.length > 0) {
+          if (Array.isArray(product.season)) {
+            if (!product.season.some(productSeason => customSection.seasons.includes(productSeason))) {
+              return false;
+            }
+          } else {
+            if (!(customSection.seasons.includes(product.season) || product.season === "all-season")) {
+              return false;
+            }
+          }
+        } else {
+          if (Array.isArray(product.productStatus)) {
+            if (!product.productStatus.includes(customSection.filterKey)) return false;
+          } else {
+            if (product.productStatus !== customSection.filterKey) return false;
+          }
+        }
+      } else {
+        // Fallback logic for non-custom sections
+        switch (type) {
+          case 'seasonal':
+            const savedSeasons = typeof window !== 'undefined' ? localStorage.getItem('homePageSeasons') : null;
+            const selectedSeasons = savedSeasons ? JSON.parse(savedSeasons) : ['winter'];
+            
+            if (Array.isArray(product.season)) {
+              if (!product.season.some(productSeason => selectedSeasons.includes(productSeason))) return false;
+            } else {
+              if (!(selectedSeasons.includes(product.season) || product.season === "all-season")) return false;
+            }
+            break;
+          case 'featured':
+            if (Array.isArray(product.productStatus)) {
+              if (!product.productStatus.includes("featured")) return false;
+            } else {
+              if (product.productStatus !== "featured") return false;
+            }
+            break;
+          case 'trending':
+            if (Array.isArray(product.productStatus)) {
+              if (!product.productStatus.includes("trending")) return false;
+            } else {
+              if (product.productStatus !== "trending") return false;
+            }
+            break;
+          case 'best-sellers':
+            if (Array.isArray(product.productStatus)) {
+              if (!product.productStatus.includes("best-seller")) return false;
+            } else {
+              if (product.productStatus !== "best-seller") return false;
+            }
+            break;
+          case 'all':
+          default:
+            break;
+        }
+      }
+
+      // Apply URL parameter filters
+      if (categoryFilter && product.category?._id !== categoryFilter) return false;
+      if (brandFilter && product.brand?._id !== brandFilter) return false;
+      if (storeFilter && product.store?._id !== storeFilter) return false;
+
+      // Apply sidebar filters (only if no URL filters)
+      if (!categoryFilter && selectedCategories.length > 0) {
+        if (!selectedCategories.includes(product.category?._id)) return false;
+      }
+      if (!brandFilter && selectedBrands.length > 0) {
+        if (!selectedBrands.includes(product.brand?._id)) return false;
+      }
+
+      return true;
+    });
+
+    console.log('🎨 Available colors calculated from', relevantProducts.length, 'filtered products');
+    
+    // Now extract colors only from these relevant products
+    relevantProducts.forEach(product => {
       // Check both colors array and variations.colors
       const productColors = product.colors || product.variations?.colors || [];
       
@@ -93,13 +179,99 @@ const CollectionPage = () => {
     });
     
     return colorObjects.sort((a, b) => a.name.localeCompare(b.name));
-  }, [products]);
+  }, [products, type, sections, categoryFilter, brandFilter, storeFilter, selectedCategories, selectedBrands]);
 
   // Extract all unique custom specifications from products
+  // 🆕 This now depends on the current filters to show only relevant specs
   const availableCustomSpecs = useMemo(() => {
     const specsMap = new Map();
     
-    products.forEach(product => {
+    // First, filter products based on category/brand/type (before color and spec filters)
+    let relevantProducts = products.filter(product => {
+      // Skip hidden products
+      if (product.isHidden) return false;
+
+      // Filter by collection type
+      const customSection = sections.find(s => s.filterKey === type);
+      
+      if (customSection) {
+        if (customSection.filterKey === "seasonal" && customSection.seasons && customSection.seasons.length > 0) {
+          if (Array.isArray(product.season)) {
+            if (!product.season.some(productSeason => customSection.seasons.includes(productSeason))) {
+              return false;
+            }
+          } else {
+            if (!(customSection.seasons.includes(product.season) || product.season === "all-season")) {
+              return false;
+            }
+          }
+        } else {
+          if (Array.isArray(product.productStatus)) {
+            if (!product.productStatus.includes(customSection.filterKey)) return false;
+          } else {
+            if (product.productStatus !== customSection.filterKey) return false;
+          }
+        }
+      } else {
+        // Fallback logic for non-custom sections
+        switch (type) {
+          case 'seasonal':
+            const savedSeasons = typeof window !== 'undefined' ? localStorage.getItem('homePageSeasons') : null;
+            const selectedSeasons = savedSeasons ? JSON.parse(savedSeasons) : ['winter'];
+            
+            if (Array.isArray(product.season)) {
+              if (!product.season.some(productSeason => selectedSeasons.includes(productSeason))) return false;
+            } else {
+              if (!(selectedSeasons.includes(product.season) || product.season === "all-season")) return false;
+            }
+            break;
+          case 'featured':
+            if (Array.isArray(product.productStatus)) {
+              if (!product.productStatus.includes("featured")) return false;
+            } else {
+              if (product.productStatus !== "featured") return false;
+            }
+            break;
+          case 'trending':
+            if (Array.isArray(product.productStatus)) {
+              if (!product.productStatus.includes("trending")) return false;
+            } else {
+              if (product.productStatus !== "trending") return false;
+            }
+            break;
+          case 'best-sellers':
+            if (Array.isArray(product.productStatus)) {
+              if (!product.productStatus.includes("best-seller")) return false;
+            } else {
+              if (product.productStatus !== "best-seller") return false;
+            }
+            break;
+          case 'all':
+          default:
+            break;
+        }
+      }
+
+      // Apply URL parameter filters
+      if (categoryFilter && product.category?._id !== categoryFilter) return false;
+      if (brandFilter && product.brand?._id !== brandFilter) return false;
+      if (storeFilter && product.store?._id !== storeFilter) return false;
+
+      // Apply sidebar filters (only if no URL filters)
+      if (!categoryFilter && selectedCategories.length > 0) {
+        if (!selectedCategories.includes(product.category?._id)) return false;
+      }
+      if (!brandFilter && selectedBrands.length > 0) {
+        if (!selectedBrands.includes(product.brand?._id)) return false;
+      }
+
+      return true;
+    });
+
+    console.log('📊 Available specs calculated from', relevantProducts.length, 'filtered products');
+    
+    // Now extract specs only from these relevant products
+    relevantProducts.forEach(product => {
       const customAttributes = product.variations?.customAttributes || [];
       
       customAttributes.forEach(attr => {
@@ -125,7 +297,7 @@ const CollectionPage = () => {
     });
     
     return specsArray.sort((a, b) => a.name.localeCompare(b.name));
-  }, [products]);
+  }, [products, type, sections, categoryFilter, brandFilter, storeFilter, selectedCategories, selectedBrands]);
 
   // Initialize filters from URL parameters
   useEffect(() => {

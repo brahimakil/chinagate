@@ -58,7 +58,7 @@ const ProductDetail = () => {
   
   const product = useMemo(() => productData?.data || {}, [productData]);
   const favorites = useMemo(() => favoritesData?.data || [], [favoritesData]);
-  const isFavorite = favorites.some(fav => fav.product._id === product._id);
+  const isFavorite = favorites.some(fav => fav?.product?._id && product?._id && fav.product._id === product._id);
   
   // Track stock changes for real-time notifications
   const previousStockRef = useRef(null);

@@ -1048,46 +1048,65 @@ function UpdateProduct({ productId }) {
         {enableCustomSpecs && (
           <div className="space-y-4">
             {customAttributes.map((attr, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg">
+              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 border rounded-lg">
                 <input
                   type="text"
                   placeholder="Specification name (e.g., Weight, Width)"
                   value={attr.name}
                   onChange={(e) => {
-                    const newAttrs = [...customAttributes];
-                    newAttrs[index].name = e.target.value;
+                    const newAttrs = customAttributes.map((item, i) => 
+                      i === index ? { ...item, name: e.target.value } : item
+                    );
                     setCustomAttributes(newAttrs);
                   }}
-                  className="w-full"
+                  className="col-span-1 px-3 py-2 border rounded text-sm"
                 />
                 <input
                   type="text"
                   placeholder="Value (e.g., 2.5, 15)"
                   value={attr.value}
                   onChange={(e) => {
-                    const newAttrs = [...customAttributes];
-                    newAttrs[index].value = e.target.value;
+                    const newAttrs = customAttributes.map((item, i) => 
+                      i === index ? { ...item, value: e.target.value } : item
+                    );
                     setCustomAttributes(newAttrs);
                   }}
-                  className="w-full"
+                  className="col-span-1 px-3 py-2 border rounded text-sm"
                 />
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    placeholder="Unit (e.g., kg, cm)"
-                    value={attr.unit}
-                    onChange={(e) => {
-                      const newAttrs = [...customAttributes];
-                      newAttrs[index].unit = e.target.value;
-                      setCustomAttributes(newAttrs);
-                    }}
-                    className="flex-1"
-                  />
+                <select
+                  value={attr.unit || ""}
+                  onChange={(e) => {
+                    const newAttrs = customAttributes.map((item, i) => 
+                      i === index ? { ...item, unit: e.target.value } : item
+                    );
+                    setCustomAttributes(newAttrs);
+                  }}
+                  className="col-span-1 px-3 py-2 border rounded text-sm"
+                >
+                  <option value="">No Unit</option>
+                  <option value="kg">Kilograms (kg)</option>
+                  <option value="g">Grams (g)</option>
+                  <option value="lb">Pounds (lb)</option>
+                  <option value="cm">Centimeters (cm)</option>
+                  <option value="m">Meters (m)</option>
+                  <option value="in">Inches (in)</option>
+                  <option value="ft">Feet (ft)</option>
+                  <option value="px">Pixels (px)</option>
+                  <option value="seats">Seats</option>
+                  <option value="doors">Doors</option>
+                  <option value="years">Years</option>
+                  <option value="pieces">Pieces</option>
+                  <option value="hours">Hours</option>
+                  <option value="watts">Watts (W)</option>
+                  <option value="volts">Volts (V)</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <div className="col-span-1 flex justify-end">
                   {customAttributes.length > 1 && (
                     <button
                       type="button"
                       onClick={() => setCustomAttributes(prev => prev.filter((_, i) => i !== index))}
-                      className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                      className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
                     >
                       Remove
                     </button>
@@ -1103,6 +1122,17 @@ function UpdateProduct({ productId }) {
             >
               Add Specification
             </button>
+
+            <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
+              <strong>Examples:</strong>
+              <ul className="mt-1 space-y-1">
+                <li>• Weight: 2.5 kg</li>
+                <li>• Dimensions: 1920x1080 px</li>
+                <li>• Seats: 4 seats</li>
+                <li>• Screen Size: 15.6 in</li>
+                <li>• Battery Life: 8 hours</li>
+              </ul>
+            </div>
           </div>
         )}
       </div>
@@ -1140,8 +1170,9 @@ function UpdateProduct({ productId }) {
                   placeholder="Platform name (e.g., TikTok, Instagram)"
                   value={link.name}
                   onChange={(e) => {
-                    const newLinks = [...socialLinks];
-                    newLinks[index].name = e.target.value;
+                    const newLinks = socialLinks.map((item, i) => 
+                      i === index ? { ...item, name: e.target.value } : item
+                    );
                     setSocialLinks(newLinks);
                   }}
                   className="w-full"
@@ -1152,8 +1183,9 @@ function UpdateProduct({ productId }) {
                     placeholder="https://..."
                     value={link.url}
                     onChange={(e) => {
-                      const newLinks = [...socialLinks];
-                      newLinks[index].url = e.target.value;
+                      const newLinks = socialLinks.map((item, i) => 
+                        i === index ? { ...item, url: e.target.value } : item
+                      );
                       setSocialLinks(newLinks);
                     }}
                     className="flex-1"
@@ -1327,7 +1359,7 @@ function UpdateProduct({ productId }) {
             .map(section => (
               <label 
                 key={section._id} 
-                className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-opacity-10"
+                className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-opacity-10 transition-all"
                 style={{ 
                   borderColor: selectedProductStatus.includes(section.filterKey) ? section.color : '#e5e7eb',
                   backgroundColor: selectedProductStatus.includes(section.filterKey) ? `${section.color}10` : 'transparent'

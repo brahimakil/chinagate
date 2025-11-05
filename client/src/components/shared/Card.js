@@ -175,25 +175,18 @@ const Card = ({ index, product, ...rest }) => {
         )}
 
         {/* Colors (Max 3 Random) */}
-        <div className="flex justify-center space-x-2">
-          {colors.length > 0 ? (
-            colors.map((color, index) => (
+        {colors.length > 0 && (
+          <div className="flex justify-center space-x-2">
+            {colors.map((color, index) => (
               <div
                 key={index}
                 className="w-6 h-6 rounded-full border-2 border-gray-200 hover:border-gray-400 transition-colors cursor-pointer"
                 style={{ backgroundColor: `#${color.hex}` }}
                 title={color.name}
               />
-            ))
-          ) : (
-            // Default colors if none specified
-            <>
-              <div className="w-6 h-6 rounded-full bg-gray-400 border-2 border-gray-200" />
-              <div className="w-6 h-6 rounded-full bg-black border-2 border-gray-200" />
-              <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-gray-200" />
-            </>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Price */}
@@ -217,7 +210,7 @@ const Card = ({ index, product, ...rest }) => {
           {product?.stock > 0 ? (
             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-              {product.stock} in stock
+              in stock
             </div>
           ) : (
             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
