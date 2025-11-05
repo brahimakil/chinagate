@@ -199,16 +199,20 @@ const Page = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex -space-x-4">
-                        {product?.gallery.map((thumbnail) => (
-                          <Image
-                            key={thumbnail?._id}
-                            src={thumbnail?.url}
-                            alt={thumbnail?.public_id}
-                            height={30}
-                            width={30}
-                            className="h-[30px] w-[30px] rounded-secondary border border-green-500/50 object-cover"
-                          />
-                        ))}
+                        {product?.gallery && product.gallery.length > 0 ? (
+                          product.gallery.map((thumbnail) => (
+                            <Image
+                              key={thumbnail?._id}
+                              src={thumbnail?.url}
+                              alt={thumbnail?.public_id}
+                              height={30}
+                              width={30}
+                              className="h-[30px] w-[30px] rounded-secondary border border-green-500/50 object-cover"
+                            />
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400">No gallery</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
