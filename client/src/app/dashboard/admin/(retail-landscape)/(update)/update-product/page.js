@@ -87,7 +87,7 @@ function UpdateProduct({ productId }) {
       setProductTitle(product.title || "");
       setProductSummary(product.summary || "");
       setProductPrice(product.price || "");
-      setProductStock(product.stock || 0); // Add this line
+      setProductStock(0); // Stock change should start at 0, not current stock
       setProductBrand(product.brand?._id || "");
       setProductCategory(product.category?._id || "");
       setProductStore(product.store?._id || "");
