@@ -47,9 +47,10 @@ cleanExpiredCarts().then((result) => {
 /* CORS configuration - allow multiple origins */
 const allowedOrigins = [
   process.env.ORIGIN_URL, // Production frontend
+  'https://chinadealslb.com',
+  'https://www.chinadealslb.com',
   'http://localhost:3000', // Local development
   'http://localhost:3001', // Alternative local port
-  
 ];
 
 /* middleware connections */
