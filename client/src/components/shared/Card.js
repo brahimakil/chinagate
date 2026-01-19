@@ -100,7 +100,7 @@ const Card = ({ index, product, ...rest }) => {
   return (
     <div
       {...rest}
-      className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100"
+      className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100"
       onClick={() =>
         router.push(
           `/product?product_id=${
@@ -112,7 +112,7 @@ const Card = ({ index, product, ...rest }) => {
       }
     >
       {/* Product Image */}
-      <div className="relative w-full h-48 mb-6 rounded-xl overflow-hidden bg-gray-50 p-4">
+      <div className="relative w-full h-36 sm:h-40 md:h-48 mb-3 sm:mb-4 md:mb-6 rounded-lg sm:rounded-xl overflow-hidden bg-gray-50 p-2 sm:p-3 md:p-4">
         <div className="relative w-full h-full">
           <Image
             src={product?.thumbnail?.url}
@@ -135,14 +135,14 @@ const Card = ({ index, product, ...rest }) => {
       </div>
 
       {/* Product Title */}
-      <div className="text-center mb-2">
-        <h3 className="text-lg font-semibold text-gray-900 truncate">
+      <div className="text-center mb-1 sm:mb-2">
+        <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 truncate">
           {product?.title}
         </h3>
       </div>
 
       {/* Brand & Category */}
-      <div className="text-center mb-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+      <div className="text-center mb-2 sm:mb-3 md:mb-4 flex items-center justify-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500">
         {product?.brand?.title && (
           <>
             <span className="font-medium">{product.brand.title}</span>
@@ -155,21 +155,21 @@ const Card = ({ index, product, ...rest }) => {
       </div>
 
       {/* Specification & Color Section */}
-      <div className="mb-6">
-        <div className="text-center text-sm font-medium text-gray-500 mb-3 tracking-wider">
+      <div className="mb-3 sm:mb-4 md:mb-6">
+        <div className="text-center text-[10px] sm:text-xs md:text-sm font-medium text-gray-500 mb-2 sm:mb-3 tracking-wider">
           SPEC & COLOR
         </div>
         
         {/* Custom Specification */}
         {specification ? (
-          <div className="text-center mb-3">
-            <div className="inline-block bg-gray-100 px-3 py-1 rounded-full text-xs font-medium text-gray-700">
+          <div className="text-center mb-2 sm:mb-3">
+            <div className="inline-block bg-gray-100 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium text-gray-700 max-w-full truncate">
               {specification.name}: {specification.value}
             </div>
           </div>
         ) : (
-          <div className="text-center mb-3">
-            <div className="inline-block bg-gray-100 px-3 py-1 rounded-full text-xs font-medium text-gray-500">
+          <div className="text-center mb-2 sm:mb-3">
+            <div className="inline-block bg-gray-100 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium text-gray-500">
               No specifications
             </div>
           </div>
@@ -177,11 +177,11 @@ const Card = ({ index, product, ...rest }) => {
 
         {/* Colors (Max 3 Random) */}
         {colors.length > 0 && (
-          <div className="flex justify-center space-x-2">
+          <div className="flex justify-center space-x-1 sm:space-x-2">
             {colors.map((color, index) => (
               <div
                 key={index}
-                className="w-6 h-6 rounded-full border-2 border-gray-200 hover:border-gray-400 transition-colors cursor-pointer"
+                className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border-2 border-gray-200 hover:border-gray-400 transition-colors cursor-pointer"
                 style={{ backgroundColor: `#${color.hex}` }}
                 title={color.name}
               />
@@ -192,30 +192,30 @@ const Card = ({ index, product, ...rest }) => {
 
       {/* Price */}
       <div className="text-center">
-        <div className="text-2xl font-semibold text-gray-800">
+        <div className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800">
           ${product?.price}
         </div>
         
         {/* Rating */}
         {product?.reviews?.length > 0 && (
-          <div className="flex items-center justify-center mt-2 space-x-1">
-            <AiFillStar className="text-yellow-400 w-4 h-4" />
-            <span className="text-sm text-gray-600">
+          <div className="flex items-center justify-center mt-1 sm:mt-2 space-x-1">
+            <AiFillStar className="text-yellow-400 w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm text-gray-600">
               ({product.reviews.length})
             </span>
           </div>
         )}
 
         {/* Stock Status */}
-        <div className="mt-3">
+        <div className="mt-2 sm:mt-3">
           {product?.stock > 0 ? (
-            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-              <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+            <div className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-green-100 text-green-700">
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1 sm:mr-2 animate-pulse"></span>
               in stock
             </div>
           ) : (
-            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-              <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+            <div className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-red-100 text-red-700">
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full mr-1 sm:mr-2"></span>
               Out of Stock
             </div>
           )}

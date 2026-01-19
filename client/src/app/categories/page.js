@@ -98,7 +98,7 @@ const CategoriesPage = () => {
       <div className="min-h-screen">
         {/* Banner */}
         {banner && (
-          <div className="relative w-full py-16 md:py-24 overflow-hidden">
+          <div className="relative w-full py-10 sm:py-14 md:py-20 lg:py-24 overflow-hidden">
             {banner.image?.url ? (
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${banner.image.url})` }}></div>
             ) : (
@@ -110,23 +110,23 @@ const CategoriesPage = () => {
             <div className="absolute inset-0" style={{ backgroundColor: banner.overlayColor || 'rgba(0, 0, 0, 0.5)' }}></div>
             {!banner.image?.url && (
               <>
-                <div className="absolute top-10 left-10 w-20 h-20 bg-purple-200/30 rounded-full blur-xl animate-pulse"></div>
-                <div className="absolute top-32 right-20 w-16 h-16 bg-pink-300/20 rounded-full blur-lg animate-bounce"></div>
+                <div className="absolute top-10 left-10 w-20 h-20 bg-purple-200/30 rounded-full blur-xl animate-pulse hidden sm:block"></div>
+                <div className="absolute top-32 right-20 w-16 h-16 bg-pink-300/20 rounded-full blur-lg animate-bounce hidden sm:block"></div>
               </>
             )}
             <Container>
-              <div className="relative text-center z-10">
-                <div className="inline-flex items-center space-x-3 px-6 md:px-8 py-3 md:py-4 bg-black/90 backdrop-blur-sm rounded-full text-xs md:text-sm font-bold mb-6 md:mb-8 shadow-xl border border-white/10" style={{ color: '#FFFFFF' }}>
-                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+              <div className="relative text-center z-10 px-2">
+                <div className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 bg-black/90 backdrop-blur-sm rounded-full text-[10px] sm:text-xs md:text-sm font-bold mb-4 sm:mb-6 md:mb-8 shadow-xl border border-white/10" style={{ color: '#FFFFFF' }}>
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse"></span>
                   <span className="tracking-wider">{banner.badge || "SHOP BY CATEGORY"}</span>
                 </div>
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight px-4" style={{ color: banner.textColor || '#111827' }}>
+                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-2 sm:mb-4 md:mb-6 leading-tight px-2 sm:px-4" style={{ color: banner.textColor || '#111827' }}>
                   {banner.title || "📂 Browse Categories"}
                 </h1>
-                <p className="text-lg md:text-2xl mb-2 md:mb-4 font-light px-4 opacity-90" style={{ color: banner.textColor || '#64748b' }}>
+                <p className="text-sm sm:text-base md:text-xl lg:text-2xl mb-1 sm:mb-2 md:mb-4 font-light px-2 sm:px-4 opacity-90" style={{ color: banner.textColor || '#64748b' }}>
                   {banner.subtitle || "Explore Our Product Categories"}
                 </p>
-                <p className="text-sm md:text-lg max-w-3xl mx-auto mb-8 md:mb-12 leading-relaxed px-4 opacity-80" style={{ color: banner.textColor || '#64748b' }}>
+                <p className="text-xs sm:text-sm md:text-base lg:text-lg max-w-3xl mx-auto mb-4 sm:mb-6 md:mb-10 lg:mb-12 leading-relaxed px-2 sm:px-4 opacity-80" style={{ color: banner.textColor || '#64748b' }}>
                   {banner.description || "Find exactly what you're looking for"}
                 </p>
               </div>
@@ -135,23 +135,23 @@ const CategoriesPage = () => {
         )}
 
         <Container>
-          <div className="py-12">
+          <div className="py-6 sm:py-8 md:py-12">
             {/* Search and Sort */}
-            <div className={`flex flex-col md:flex-row gap-4 mb-12 transform transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+            <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 md:mb-12 transform transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
               <div className="relative flex-1">
-                <BsSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <BsSearch className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search categories..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-9 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                className="px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               >
                 <option value="name">Sort by Name</option>
                 <option value="products">Sort by Products</option>
@@ -161,16 +161,16 @@ const CategoriesPage = () => {
 
             {/* Categories Grid */}
             {fetchingCategories || fetchingProducts ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 {[...Array(8)].map((_, i) => <Niche key={i} />)}
               </div>
             ) : filteredAndSortedCategories.length === 0 ? (
-              <div className="text-center py-20">
-                <BsBoxSeam className="text-6xl text-gray-300 mx-auto mb-4" />
-                <p className="text-xl text-gray-500">No categories found</p>
+              <div className="text-center py-12 sm:py-20">
+                <BsBoxSeam className="text-4xl sm:text-6xl text-gray-300 mx-auto mb-4" />
+                <p className="text-lg sm:text-xl text-gray-500">No categories found</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 {filteredAndSortedCategories.map((category, index) => {
                   const count = category.productCount || 0;
                   console.log(`🎨 Rendering "${category.title}": count = ${count}`);
@@ -178,12 +178,12 @@ const CategoriesPage = () => {
                   <div
                     key={`cat-${category._id}-count-${count}-${Date.now()}`}
                     onClick={() => handleCategoryClick(category._id)}
-                    className={`group cursor-pointer bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-2 ${
+                    className={`group cursor-pointer bg-white rounded-lg sm:rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-2 ${
                       isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
                     }`}
                     style={{ transitionDelay: `${index * 50}ms` }}
                   >
-                    <div className="relative h-48 overflow-hidden">
+                    <div className="relative h-32 sm:h-40 md:h-48 overflow-hidden">
                       <Image
                         src={category.thumbnail?.url}
                         alt={category.title}
@@ -191,13 +191,13 @@ const CategoriesPage = () => {
                         className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                      <div className="absolute bottom-4 left-4 text-white">
-                        <h3 className="text-xl font-bold">{category.title}</h3>
-                        <p className="text-sm opacity-90">{count} Product{count !== 1 ? 's' : ''}</p>
+                      <div className="absolute bottom-2 sm:bottom-3 md:bottom-4 left-2 sm:left-3 md:left-4 text-white">
+                        <h3 className="text-sm sm:text-base md:text-xl font-bold line-clamp-1">{category.title}</h3>
+                        <p className="text-xs sm:text-sm opacity-90">{count} Product{count !== 1 ? 's' : ''}</p>
                       </div>
                     </div>
-                    <div className="p-4">
-                      <p className="text-sm text-gray-600 line-clamp-2">{category.description}</p>
+                    <div className="p-2 sm:p-3 md:p-4">
+                      <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">{category.description}</p>
                     </div>
                   </div>
                 )})}

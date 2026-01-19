@@ -129,7 +129,7 @@ const BrandsPage = () => {
       <div className="min-h-screen">
         {/* Banner */}
         {banner && (
-          <div className="relative w-full py-16 md:py-24 overflow-hidden">
+          <div className="relative w-full py-10 sm:py-14 md:py-20 lg:py-24 overflow-hidden">
             {banner.image?.url ? (
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${banner.image.url})` }}></div>
             ) : (
@@ -141,23 +141,23 @@ const BrandsPage = () => {
             <div className="absolute inset-0" style={{ backgroundColor: banner.overlayColor || 'rgba(0, 0, 0, 0.5)' }}></div>
             {!banner.image?.url && (
               <>
-                <div className="absolute top-10 left-10 w-20 h-20 bg-emerald-200/30 rounded-full blur-xl animate-pulse"></div>
-                <div className="absolute top-32 right-20 w-16 h-16 bg-green-300/20 rounded-full blur-lg animate-bounce"></div>
+                <div className="absolute top-10 left-10 w-20 h-20 bg-emerald-200/30 rounded-full blur-xl animate-pulse hidden sm:block"></div>
+                <div className="absolute top-32 right-20 w-16 h-16 bg-green-300/20 rounded-full blur-lg animate-bounce hidden sm:block"></div>
               </>
             )}
             <Container>
-              <div className="relative text-center z-10">
-                <div className="inline-flex items-center space-x-3 px-6 md:px-8 py-3 md:py-4 bg-black/90 backdrop-blur-sm rounded-full text-xs md:text-sm font-bold mb-6 md:mb-8 shadow-xl border border-white/10" style={{ color: '#FFFFFF' }}>
-                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+              <div className="relative text-center z-10 px-2">
+                <div className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 bg-black/90 backdrop-blur-sm rounded-full text-[10px] sm:text-xs md:text-sm font-bold mb-4 sm:mb-6 md:mb-8 shadow-xl border border-white/10" style={{ color: '#FFFFFF' }}>
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse"></span>
                   <span className="tracking-wider">{banner.badge || "SHOP BY BRAND"}</span>
                 </div>
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight px-4" style={{ color: banner.textColor || '#111827' }}>
+                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-2 sm:mb-4 md:mb-6 leading-tight px-2 sm:px-4" style={{ color: banner.textColor || '#111827' }}>
                   {banner.title || "🏷️ Browse Brands"}
                 </h1>
-                <p className="text-lg md:text-2xl mb-2 md:mb-4 font-light px-4 opacity-90" style={{ color: banner.textColor || '#64748b' }}>
+                <p className="text-sm sm:text-base md:text-xl lg:text-2xl mb-1 sm:mb-2 md:mb-4 font-light px-2 sm:px-4 opacity-90" style={{ color: banner.textColor || '#64748b' }}>
                   {banner.subtitle || "Shop Your Favorite Brands"}
                 </p>
-                <p className="text-sm md:text-lg max-w-3xl mx-auto mb-8 md:mb-12 leading-relaxed px-4 opacity-80" style={{ color: banner.textColor || '#64748b' }}>
+                <p className="text-xs sm:text-sm md:text-base lg:text-lg max-w-3xl mx-auto mb-4 sm:mb-6 md:mb-10 lg:mb-12 leading-relaxed px-2 sm:px-4 opacity-80" style={{ color: banner.textColor || '#64748b' }}>
                   {banner.description || "Discover products from the world's leading brands"}
                 </p>
               </div>
@@ -173,62 +173,65 @@ const BrandsPage = () => {
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
               }`}
             >
-              <div className="bg-neutral-100/70 rounded-primary shadow-lg p-8 border border-gray-100">
-                <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
-                  {/* Search Bar */}
-                  <div className="relative flex-1 max-w-md">
+              <div className="bg-neutral-100/70 rounded-primary shadow-lg p-4 sm:p-6 md:p-8 border border-gray-100">
+                <div className="flex flex-col gap-4 sm:gap-6">
+                  {/* Search Bar - Full width on mobile */}
+                  <div className="relative w-full">
                     <input
                       type="text"
                       placeholder=" Search brands..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="block w-full px-4 py-3 border border-gray-300 rounded-secondary leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-center"
+                      className="block w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-secondary leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-center"
                     />
                   </div>
 
-                  {/* Category Filter */}
-                  <div className="flex items-center space-x-4">
-                    <label className="text-sm font-medium text-gray-700">Category:</label>
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="border border-gray-300 rounded-secondary px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
-                    >
-                      <option value="all">All Categories</option>
-                      {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
-                          {category.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Category Filter and View Mode - Row on larger screens */}
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+                    {/* Category Filter */}
+                    <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
+                      <label className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">Category:</label>
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="flex-1 border border-gray-300 rounded-secondary px-2 sm:px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
+                      >
+                        <option value="all">All Categories</option>
+                        {categories.map((category) => (
+                          <option key={category._id} value={category._id}>
+                            {category.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  {/* View Mode Toggle */}
-                  <div className="flex items-center space-x-2 bg-white rounded-secondary p-1 border">
-                    <button
-                      onClick={() => setViewMode("ecosystem")}
-                      className={`px-4 py-2 rounded-secondary text-sm font-medium transition-all duration-300 ${
-                        viewMode === "ecosystem" 
-                          ? "bg-black text-white" 
-                          : "text-gray-600 hover:text-black"
-                      }`}
-                    >
-                      Ecosystem
-                    </button>
-                    <button
-                      onClick={() => setViewMode("grid")}
-                      className={`px-4 py-2 rounded-secondary text-sm font-medium transition-all duration-300 ${
-                        viewMode === "grid" 
-                          ? "bg-black text-white" 
-                          : "text-gray-600 hover:text-black"
-                      }`}
-                    >
-                      <BsGrid3X3Gap className="w-4 h-4" />
-                    </button>
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center space-x-2 bg-white rounded-secondary p-1 border">
+                      <button
+                        onClick={() => setViewMode("ecosystem")}
+                        className={`px-3 sm:px-4 py-2 rounded-secondary text-xs sm:text-sm font-medium transition-all duration-300 ${
+                          viewMode === "ecosystem" 
+                            ? "bg-black text-white" 
+                            : "text-gray-600 hover:text-black"
+                        }`}
+                      >
+                        Ecosystem
+                      </button>
+                      <button
+                        onClick={() => setViewMode("grid")}
+                        className={`px-3 sm:px-4 py-2 rounded-secondary text-xs sm:text-sm font-medium transition-all duration-300 ${
+                          viewMode === "grid" 
+                            ? "bg-black text-white" 
+                            : "text-gray-600 hover:text-black"
+                        }`}
+                      >
+                        <BsGrid3X3Gap className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Results Count */}
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
                     {filteredBrands.length} brand{filteredBrands.length === 1 ? '' : 's'} found
                   </div>
                 </div>
@@ -301,10 +304,10 @@ const EcosystemView = ({ brands, onBrandClick, onCategoryClick }) => {
         >
           {/* Brand Header */}
           <div 
-            className="p-8 bg-gradient-to-r from-gray-50 to-white cursor-pointer"
+            className="p-4 sm:p-6 md:p-8 bg-gradient-to-r from-gray-50 to-white cursor-pointer"
             onClick={() => onBrandClick(brand._id)}
           >
-            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
               {/* Brand Logo */}
               <div className="flex-shrink-0">
                 <Image
@@ -312,29 +315,29 @@ const EcosystemView = ({ brands, onBrandClick, onCategoryClick }) => {
                   alt={brand?.title}
                   width={80}
                   height={80}
-                  className="w-20 h-20 object-cover rounded-lg border-2 border-white shadow-lg group-hover:scale-110 transition-transform duration-500"
+                  className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 object-cover rounded-lg border-2 border-white shadow-lg group-hover:scale-110 transition-transform duration-500"
                 />
               </div>
 
               {/* Brand Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex-1 min-w-0 w-full">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
                   <div>
-                    <h2 className="text-3xl font-bold text-black group-hover:text-black transition-colors duration-300">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-black group-hover:text-black transition-colors duration-300">
                       {brand.title}
                     </h2>
-                    <p className="text-slate-600 mt-2 line-clamp-2">
+                    <p className="text-sm sm:text-base text-slate-600 mt-1 sm:mt-2 line-clamp-2">
                       {brand.description}
                     </p>
                   </div>
                   
-                  <div className="flex items-center space-x-6 text-sm">
+                  <div className="flex items-center space-x-4 sm:space-x-6 text-xs sm:text-sm">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-black">{brand.totalProducts}</div>
+                      <div className="text-lg sm:text-xl md:text-2xl font-bold text-black">{brand.totalProducts}</div>
                       <div className="text-slate-600">Products</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-black">{brand.categories.length}</div>
+                      <div className="text-lg sm:text-xl md:text-2xl font-bold text-black">{brand.categories.length}</div>
                       <div className="text-slate-600">Categories</div>
                     </div>
                   </div>
@@ -345,13 +348,13 @@ const EcosystemView = ({ brands, onBrandClick, onCategoryClick }) => {
 
           {/* Categories Network */}
           {brand.categories.length > 0 && (
-            <div className="p-8 bg-white">
-              <h3 className="text-lg font-semibold text-black mb-6 flex items-center">
-                <BsGrid3X3Gap className="w-5 h-5 mr-2" />
+            <div className="p-4 sm:p-6 md:p-8 bg-white">
+              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-black mb-4 sm:mb-6 flex items-center">
+                <BsGrid3X3Gap className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Category Specializations
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {brand.categories.map((category, categoryIndex) => (
                   <div
                     key={category._id}
@@ -414,54 +417,54 @@ const EcosystemView = ({ brands, onBrandClick, onCategoryClick }) => {
 // Grid View Component
 const GridView = ({ brands, onBrandClick }) => {
   return (
-    <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-8">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-8">
       {brands.map((brand, index) => (
         <div
           key={brand._id}
-          className={`group bg-white border border-gray-200 rounded-lg p-6 hover:border-black hover:shadow-xl transition-all duration-500 cursor-pointer transform hover:-translate-y-2 animate-fade-in-up`}
+          className={`group bg-white border border-gray-200 rounded-lg p-3 sm:p-4 md:p-6 hover:border-black hover:shadow-xl transition-all duration-500 cursor-pointer transform hover:-translate-y-2 animate-fade-in-up`}
           style={{ animationDelay: `${index * 100}ms` }}
           onClick={() => onBrandClick(brand._id)}
         >
           {/* Brand Image */}
-          <div className="relative mb-6 overflow-hidden rounded">
+          <div className="relative mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded">
             <Image
               src={brand?.logo?.url}
               alt={brand?.title}
               width={200}
               height={150}
-              className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-20 sm:h-24 md:h-32 object-cover group-hover:scale-110 transition-transform duration-500"
             />
           </div>
 
           {/* Brand Info */}
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-3 md:space-y-4">
             <div>
-              <h3 className="text-xl font-bold text-black group-hover:text-black transition-colors duration-300">
+              <h3 className="text-sm sm:text-base md:text-xl font-bold text-black group-hover:text-black transition-colors duration-300 line-clamp-1">
                 {brand?.title}
               </h3>
-              <p className="text-sm text-slate-600 mt-2 line-clamp-2">
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 sm:mt-2 line-clamp-2">
                 {brand?.description}
               </p>
             </div>
 
             {/* Stats */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 md:space-x-4 text-xs sm:text-sm gap-1 sm:gap-0">
                 <div className="flex items-center space-x-1">
-                  <BsBoxSeam className="w-4 h-4 text-indigo-500" />
+                  <BsBoxSeam className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-500" />
                   <span className="text-indigo-500 font-medium">
-                    {brand.totalProducts} Products
+                    {brand.totalProducts}
                   </span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <BsGrid3X3Gap className="w-4 h-4 text-purple-500" />
+                  <BsGrid3X3Gap className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
                   <span className="text-purple-500 font-medium">
-                    {brand.categories.length} Categories
+                    {brand.categories.length}
                   </span>
                 </div>
               </div>
-              <div className="text-black group-hover:translate-x-1 transition-transform duration-300">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="text-black group-hover:translate-x-1 transition-transform duration-300 hidden sm:block">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>

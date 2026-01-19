@@ -17,16 +17,16 @@ import React from "react";
 
 const Niche = () => {
   return (
-    <section className="border p-4 rounded-primary flex flex-col gap-y-4">
-      <div className="rounded h-[50px] w-[50px] bg-gray-200 border animate-pulse" />
-      <div className="flex flex-col gap-y-2">
-        <div className="border rounded h-8 bg-gray-200 animate-pulse" />
-        <div className="border rounded h-5 bg-gray-200 animate-pulse" />
-        <div className="flex flex-row gap-x-2">
-          <div className="border rounded h-3 flex-1 bg-gray-200 animate-pulse" />
-          <div className="border rounded h-3 flex-1 bg-gray-200 animate-pulse" />
-          <div className="border rounded h-3 flex-1 bg-gray-200 animate-pulse" />
-          <div className="border rounded h-3 flex-1 bg-gray-200 animate-pulse" />
+    <section className="border p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-primary flex flex-col gap-y-2 sm:gap-y-3 md:gap-y-4 bg-white">
+      <div className="rounded h-[30px] w-[30px] sm:h-[40px] sm:w-[40px] md:h-[50px] md:w-[50px] bg-gray-200 border animate-pulse" />
+      <div className="flex flex-col gap-y-1.5 sm:gap-y-2">
+        <div className="border rounded h-5 sm:h-6 md:h-8 bg-gray-200 animate-pulse" />
+        <div className="border rounded h-3 sm:h-4 md:h-5 bg-gray-200 animate-pulse" />
+        <div className="flex flex-row gap-x-1 sm:gap-x-2">
+          <div className="border rounded h-2 sm:h-3 flex-1 bg-gray-200 animate-pulse" />
+          <div className="border rounded h-2 sm:h-3 flex-1 bg-gray-200 animate-pulse" />
+          <div className="border rounded h-2 sm:h-3 flex-1 bg-gray-200 animate-pulse" />
+          <div className="border rounded h-2 sm:h-3 flex-1 bg-gray-200 animate-pulse" />
         </div>
       </div>
     </section>

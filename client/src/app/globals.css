@@ -168,3 +168,91 @@ section {
     margin-bottom: 1rem;
   }
 }
+
+/* ===== MOBILE OPTIMIZATION UTILITIES ===== */
+
+/* Better touch targets for mobile */
+@media (max-width: 640px) {
+  button, 
+  [role="button"],
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  /* Better spacing for mobile cards */
+  .mobile-card-spacing {
+    padding: 0.75rem;
+  }
+}
+
+/* Responsive text utilities */
+.text-responsive-sm {
+  @apply text-xs sm:text-sm;
+}
+
+.text-responsive-base {
+  @apply text-sm sm:text-base;
+}
+
+.text-responsive-lg {
+  @apply text-base sm:text-lg md:text-xl;
+}
+
+.text-responsive-xl {
+  @apply text-lg sm:text-xl md:text-2xl lg:text-3xl;
+}
+
+/* Responsive padding utilities */
+.p-responsive {
+  @apply p-3 sm:p-4 md:p-6;
+}
+
+.px-responsive {
+  @apply px-3 sm:px-4 md:px-6;
+}
+
+.py-responsive {
+  @apply py-3 sm:py-4 md:py-6;
+}
+
+/* Gap utilities for mobile grids */
+.gap-responsive {
+  @apply gap-3 sm:gap-4 md:gap-6;
+}
+
+/* Line clamp utilities */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Mobile-first container adjustment */
+@media (max-width: 640px) {
+  .container, section {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}

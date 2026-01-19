@@ -19,7 +19,7 @@ const Container = ({ className, children, ...props }) => {
   return (
     <section
       {...props}
-      className={"max-w-7xl mx-auto px-4 w-full" + (className ? " " + className : "")}
+      className={"max-w-7xl mx-auto px-3 sm:px-4 md:px-6 w-full" + (className ? " " + className : "")}
     >
       {children}
     </section>

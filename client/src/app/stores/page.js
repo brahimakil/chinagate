@@ -141,20 +141,20 @@ const StoresPage = () => {
     <Main>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
         <Container>
-          <div className="py-20">
+          <div className="py-10 sm:py-14 md:py-20">
             {/* Header Section */}
             <div 
-              className={`text-center mb-16 transform transition-all duration-1000 ${
+              className={`text-center mb-8 sm:mb-12 md:mb-16 transform transition-all duration-1000 px-2 ${
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
               }`}
             >
-              <h1 className="text-5xl font-bold text-black mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-2 sm:mb-3 md:mb-4">
                 Store <span className="text-black">Directory</span>
               </h1>
-              <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto px-2">
                 Discover amazing stores, connect with sellers, and find your next favorite shop in our marketplace.
               </p>
-              <div className="mt-8 w-24 h-1 bg-black mx-auto rounded-full"></div>
+              <div className="mt-4 sm:mt-6 md:mt-8 w-16 sm:w-20 md:w-24 h-1 bg-black mx-auto rounded-full"></div>
             </div>
 
             {/* Controls */}
@@ -163,41 +163,43 @@ const StoresPage = () => {
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
               }`}
             >
-              <div className="bg-white rounded-primary shadow-lg p-8 border border-gray-200">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                  {/* Search */}
-                  <div className="lg:col-span-1">
+              <div className="bg-white rounded-primary shadow-lg p-4 sm:p-6 md:p-8 border border-gray-200">
+                <div className="flex flex-col gap-4 sm:gap-6">
+                  {/* Search - full width on mobile */}
+                  <div className="w-full">
                     <input
                       type="text"
                       placeholder=" Search stores..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-secondary bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-center"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-secondary bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-center"
                     />
                   </div>
 
-                  {/* Category Filter */}
-                  <div className="lg:col-span-1">
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full border border-gray-300 rounded-secondary px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
-                    >
-                      <option value="all">All Categories</option>
-                      {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
-                          {category.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Category Filter and Sort - row on larger screens */}
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    {/* Category Filter */}
+                    <div className="flex-1">
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full border border-gray-300 rounded-secondary px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
+                      >
+                        <option value="all">All Categories</option>
+                        {categories.map((category) => (
+                          <option key={category._id} value={category._id}>
+                            {category.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  {/* Sort */}
-                  <div className="lg:col-span-1">
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full border border-gray-300 rounded-secondary px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
+                    {/* Sort */}
+                    <div className="flex-1">
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="w-full border border-gray-300 rounded-secondary px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300"
                     >
                       <option value="popular">Most Popular</option>
                       <option value="rating">Highest Rated</option>
@@ -205,13 +207,14 @@ const StoresPage = () => {
                       <option value="name">Name (A-Z)</option>
                     </select>
                   </div>
+                  </div>
 
                   {/* View Mode */}
-                  <div className="lg:col-span-1">
+                  <div className="w-full">
                     <div className="flex bg-gray-100 rounded-secondary p-1">
                       <button
                         onClick={() => setViewMode("directory")}
-                        className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-all duration-300 ${
+                        className={`flex-1 px-2 sm:px-3 py-2 rounded text-xs sm:text-sm font-medium transition-all duration-300 ${
                           viewMode === "directory" 
                             ? "bg-black text-white" 
                             : "text-gray-600 hover:text-black"
@@ -221,7 +224,7 @@ const StoresPage = () => {
                       </button>
                       <button
                         onClick={() => setViewMode("cards")}
-                        className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-all duration-300 ${
+                        className={`flex-1 px-2 sm:px-3 py-2 rounded text-xs sm:text-sm font-medium transition-all duration-300 ${
                           viewMode === "cards" 
                             ? "bg-black text-white" 
                             : "text-gray-600 hover:text-black"
@@ -231,7 +234,7 @@ const StoresPage = () => {
                       </button>
                       <button
                         onClick={() => setViewMode("list")}
-                        className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-all duration-300 ${
+                        className={`flex-1 px-2 sm:px-3 py-2 rounded text-xs sm:text-sm font-medium transition-all duration-300 ${
                           viewMode === "list" 
                             ? "bg-black text-white" 
                             : "text-gray-600 hover:text-black"
@@ -244,7 +247,7 @@ const StoresPage = () => {
                 </div>
 
                 {/* Results Info */}
-                <div className="mt-4 text-center text-sm text-gray-600">
+                <div className="mt-4 text-center text-xs sm:text-sm text-gray-600">
                   {filteredStores.length} store{filteredStores.length === 1 ? '' : 's'} found
                 </div>
               </div>
@@ -287,21 +290,21 @@ const StoresPage = () => {
             {/* CTA Section */}
             {filteredStores.length > 0 && (
               <div 
-                className={`text-center mt-20 transform transition-all duration-1000 delay-600 ${
+                className={`text-center mt-10 sm:mt-14 md:mt-20 transform transition-all duration-1000 delay-600 ${
                   isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
                 }`}
               >
                 <div 
-                  className="bg-yellow-50 rounded-primary p-8 text-black relative"
+                  className="bg-yellow-50 rounded-primary p-4 sm:p-6 md:p-8 text-black relative"
                   style={{ backgroundImage: "url(/assets/home/banner/dots.svg)" }}
                 >
-                  <h2 className="text-3xl font-bold mb-4">Want to Open Your Own Store?</h2>
-                  <p className="text-lg mb-6 text-slate-600">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 md:mb-4">Want to Open Your Own Store?</h2>
+                  <p className="text-sm sm:text-base md:text-lg mb-4 sm:mb-5 md:mb-6 text-slate-600 px-2">
                     Join our marketplace and start selling your products to thousands of customers worldwide.
                   </p>
                   <button
                     onClick={() => router.push('/auth/signup')}
-                    className="px-8 py-4 border border-black rounded-secondary bg-black hover:bg-black/90 text-white transition-colors drop-shadow w-fit"
+                    className="px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 border border-black rounded-secondary bg-black hover:bg-black/90 text-white transition-colors drop-shadow w-fit text-sm sm:text-base"
                   >
                     Start Selling Today
                   </button>
@@ -318,15 +321,15 @@ const StoresPage = () => {
 // Directory View - Split screen with store list and featured store
 const DirectoryView = ({ stores, featuredStore, onStoreSelect, onStoreClick }) => {
   return (
-    <div className="grid lg:grid-cols-5 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 md:gap-8">
       {/* Store List */}
-      <div className="lg:col-span-2">
-        <div className="bg-white rounded-primary shadow-lg p-6 max-h-[800px] overflow-y-auto">
-          <h3 className="text-xl font-bold mb-6 flex items-center">
-            <BsShop className="w-5 h-5 mr-2" />
+      <div className="lg:col-span-2 order-2 lg:order-1">
+        <div className="bg-white rounded-primary shadow-lg p-4 sm:p-6 max-h-[400px] lg:max-h-[800px] overflow-y-auto">
+          <h3 className="text-base sm:text-lg md:text-xl font-bold mb-4 sm:mb-6 flex items-center">
+            <BsShop className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             All Stores ({stores.length})
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {stores.map((store, index) => (
               <div
                 key={store._id}
@@ -378,7 +381,7 @@ const DirectoryView = ({ stores, featuredStore, onStoreSelect, onStoreClick }) =
       </div>
 
       {/* Featured Store */}
-      <div className="lg:col-span-3">
+      <div className="lg:col-span-3 order-1 lg:order-2">
         {featuredStore && (
           <div className="bg-white rounded-primary shadow-lg overflow-hidden">
             {/* Store Header */}
@@ -420,23 +423,23 @@ const DirectoryView = ({ stores, featuredStore, onStoreSelect, onStoreClick }) =
             </div>
 
             {/* Store Stats */}
-            <div className="p-6">
-              <div className="grid grid-cols-4 gap-4 mb-6">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-black">{featuredStore.productCount}</div>
-                  <div className="text-sm text-gray-600">Products</div>
+                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-black">{featuredStore.productCount}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Products</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-black">{featuredStore.rating}</div>
-                  <div className="text-sm text-gray-600">Rating</div>
+                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-black">{featuredStore.rating}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Rating</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-black">{featuredStore.reviews}</div>
-                  <div className="text-sm text-gray-600">Reviews</div>
+                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-black">{featuredStore.reviews}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Reviews</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-black">{featuredStore.followers}</div>
-                  <div className="text-sm text-gray-600">Followers</div>
+                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-black">{featuredStore.followers}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Followers</div>
                 </div>
               </div>
 
@@ -481,15 +484,15 @@ const DirectoryView = ({ stores, featuredStore, onStoreSelect, onStoreClick }) =
 // Cards View - Traditional card grid
 const CardsView = ({ stores, onStoreClick }) => {
   return (
-    <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-8">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
       {stores.map((store, index) => (
         <div
           key={store._id}
-          className={`bg-white rounded-primary shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 cursor-pointer transform hover:-translate-y-2 animate-fade-in-up`}
+          className={`bg-white rounded-lg sm:rounded-primary shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 cursor-pointer transform hover:-translate-y-2 animate-fade-in-up`}
           style={{ animationDelay: `${index * 100}ms` }}
           onClick={() => onStoreClick(store._id)}
         >
-          <div className="relative h-48">
+          <div className="relative h-24 sm:h-32 md:h-48">
             <Image
               src={store.thumbnail?.url}
               alt={store.title}
@@ -510,22 +513,22 @@ const CardsView = ({ stores, onStoreClick }) => {
             </div>
           </div>
           
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-black mb-2">{store.title}</h3>
-            <p className="text-gray-600 text-sm mb-4 line-clamp-2">{store.description}</p>
+          <div className="p-3 sm:p-4 md:p-6">
+            <h3 className="text-sm sm:text-base md:text-xl font-bold text-black mb-1 sm:mb-2 line-clamp-1">{store.title}</h3>
+            <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-2">{store.description}</p>
             
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-4 text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 sm:mb-4 gap-1 sm:gap-0">
+              <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
                 <div className="flex items-center">
-                  <BsStar className="w-4 h-4 text-yellow-500 mr-1" />
+                  <BsStar className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 mr-1" />
                   {store.rating}
                 </div>
                 <div className="flex items-center">
-                  <BsBoxSeam className="w-4 h-4 text-blue-500 mr-1" />
+                  <BsBoxSeam className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 mr-1" />
                   {store.productCount}
                 </div>
               </div>
-              <div className="text-sm text-gray-500">{store.followers} followers</div>
+              <div className="text-xs sm:text-sm text-gray-500 hidden sm:block">{store.followers} followers</div>
             </div>
             
             {store.tags && store.tags.length > 0 && (

@@ -721,7 +721,7 @@ const CollectionPage = () => {
     <Main>
       <div className="min-h-screen">
         {/* Dynamic Hero Banner */}
-        <div className="relative py-16 md:py-24 overflow-hidden">
+        <div className="relative py-10 sm:py-14 md:py-20 lg:py-24 overflow-hidden">
           {/* Background Image */}
           {banner?.bannerImage?.url || banner?.image?.url ? (
             <div 
@@ -748,23 +748,23 @@ const CollectionPage = () => {
           {/* Floating Elements */}
           {!(banner?.bannerImage?.url || banner?.image?.url) && (
             <>
-              <div className="absolute top-10 left-10 w-20 h-20 bg-slate-200/30 rounded-full blur-xl animate-pulse"></div>
-              <div className="absolute top-32 right-20 w-16 h-16 bg-gray-300/20 rounded-full blur-lg animate-bounce"></div>
-              <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-slate-300/25 rounded-full blur-md animate-pulse"></div>
+              <div className="absolute top-10 left-10 w-20 h-20 bg-slate-200/30 rounded-full blur-xl animate-pulse hidden sm:block"></div>
+              <div className="absolute top-32 right-20 w-16 h-16 bg-gray-300/20 rounded-full blur-lg animate-bounce hidden sm:block"></div>
+              <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-slate-300/25 rounded-full blur-md animate-pulse hidden sm:block"></div>
             </>
           )}
 
           <Container>
-            <div className="relative text-center z-10">
+            <div className="relative text-center z-10 px-2">
               <div 
-                className="inline-flex items-center space-x-3 px-6 md:px-8 py-3 md:py-4 bg-black/90 backdrop-blur-sm rounded-full text-xs md:text-sm font-bold mb-6 md:mb-8 shadow-xl border border-white/10 text-white"
+                className="inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 bg-black/90 backdrop-blur-sm rounded-full text-[10px] sm:text-xs md:text-sm font-bold mb-4 sm:mb-6 md:mb-8 shadow-xl border border-white/10 text-white"
               >
-                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse"></span>
                 <span className="tracking-wider">{banner?.badge || collectionInfo.badge}</span>
               </div>
 
               <h1 
-                className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight px-4"
+                className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-2 sm:mb-4 md:mb-6 leading-tight px-2 sm:px-4"
                 style={{ 
                   color: banner?.bannerTextColor || banner?.textColor || '#111827'
                 }}
@@ -773,7 +773,7 @@ const CollectionPage = () => {
               </h1>
               
               <p 
-                className="text-lg md:text-2xl mb-2 md:mb-4 font-light px-4 opacity-90"
+                className="text-sm sm:text-base md:text-xl lg:text-2xl mb-1 sm:mb-2 md:mb-4 font-light px-2 sm:px-4 opacity-90"
                 style={{ 
                   color: banner?.bannerTextColor || banner?.textColor || '#64748b'
                 }}
@@ -781,7 +781,7 @@ const CollectionPage = () => {
                 {banner?.subtitle || collectionInfo.subtitle}
               </p>
               <p 
-                className="text-sm md:text-lg max-w-3xl mx-auto mb-8 md:mb-12 leading-relaxed px-4 opacity-80"
+                className="text-xs sm:text-sm md:text-base lg:text-lg max-w-3xl mx-auto mb-4 sm:mb-6 md:mb-10 lg:mb-12 leading-relaxed px-2 sm:px-4 opacity-80"
                 style={{ 
                   color: banner?.bannerTextColor || banner?.textColor || '#64748b'
                 }}
@@ -789,54 +789,54 @@ const CollectionPage = () => {
                 {banner?.description || collectionInfo.description}
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 px-4">
-                <div className="bg-white/80 backdrop-blur-sm px-6 md:px-8 py-3 md:py-4 rounded-full shadow-lg border border-white/20">
-                  <span className="text-xl md:text-2xl font-bold text-gray-900">{filteredProducts.length}</span>
-                  <span className="text-slate-600 ml-2 text-sm md:text-base">Products Available</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 px-2 sm:px-4">
+                <div className="bg-white/80 backdrop-blur-sm px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 rounded-full shadow-lg border border-white/20">
+                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{filteredProducts.length}</span>
+                  <span className="text-slate-600 ml-1.5 sm:ml-2 text-xs sm:text-sm md:text-base">Products</span>
                 </div>
                 
                 <button
                   onClick={() => router.push('/')}
-                  className="group bg-white/90 backdrop-blur-sm text-gray-900 px-6 md:px-8 py-3 md:py-4 rounded-full hover:bg-white transition-all duration-300 shadow-lg border border-white/20 font-medium text-sm md:text-base"
+                  className="group bg-white/90 backdrop-blur-sm text-gray-900 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 rounded-full hover:bg-white transition-all duration-300 shadow-lg border border-white/20 font-medium text-xs sm:text-sm md:text-base"
                 >
                   <span className="group-hover:-translate-x-1 transition-transform duration-300 inline-block">←</span>
-                  <span className="ml-2">Back to Home</span>
+                  <span className="ml-1.5 sm:ml-2">Back to Home</span>
                 </button>
               </div>
 
               {/* Active Filters Display - with dynamic text color */}
               {(categoryFilter || brandFilter || storeFilter || selectedColors.length > 0 || Object.keys(selectedCustomSpecs).length > 0) && (
-                <div className="mt-6 md:mt-8 flex flex-wrap items-center justify-center gap-2 md:gap-3 px-4">
-                  <span className="text-xs md:text-sm" style={{ color: banner?.bannerTextColor || banner?.textColor || '#64748b' }}>
-                    Active filters:
+                <div className="mt-4 sm:mt-6 md:mt-8 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-3 px-2 sm:px-4">
+                  <span className="text-[10px] sm:text-xs md:text-sm" style={{ color: banner?.bannerTextColor || banner?.textColor || '#64748b' }}>
+                    Filters:
                   </span>
                   {categoryFilter && (
-                    <span className="bg-blue-100 text-blue-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium">
+                    <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full text-[10px] sm:text-xs md:text-sm font-medium">
                       📂 {categories.find(cat => cat._id === categoryFilter)?.title || 'Category'}
                     </span>
                   )}
                   {brandFilter && (
-                    <span className="bg-green-100 text-green-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium">
+                    <span className="bg-green-100 text-green-800 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full text-[10px] sm:text-xs md:text-sm font-medium">
                       🏷️ {brands.find(brand => brand._id === brandFilter)?.title || 'Brand'}
                     </span>
                   )}
                   {selectedColors.map(color => (
-                    <span key={color} className="bg-purple-100 text-purple-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium">
+                    <span key={color} className="bg-purple-100 text-purple-800 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full text-[10px] sm:text-xs md:text-sm font-medium">
                       🎨 {color}
                     </span>
                   ))}
                   {Object.entries(selectedCustomSpecs).map(([specName, values]) => 
                     values.map(value => (
-                      <span key={`${specName}-${value}`} className="bg-orange-100 text-orange-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium">
+                      <span key={`${specName}-${value}`} className="bg-orange-100 text-orange-800 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full text-[10px] sm:text-xs md:text-sm font-medium">
                         🔧 {specName}: {value}
                       </span>
                     ))
                   )}
                   <button
                     onClick={clearAllFilters}
-                    className="bg-red-100 text-red-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium hover:bg-red-200 transition-colors"
+                    className="bg-red-100 text-red-800 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full text-[10px] sm:text-xs md:text-sm font-medium hover:bg-red-200 transition-colors"
                   >
-                    ✕ Clear Filters
+                    ✕ Clear
                   </button>
                 </div>
               )}
@@ -848,10 +848,10 @@ const CollectionPage = () => {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Enhanced Filters Sidebar */}
             <div className="lg:w-1/4">
-              <div className="lg:hidden mb-6">
+              <div className="lg:hidden mb-4 sm:mb-6">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="w-full bg-white/90 backdrop-blur-sm text-gray-900 px-6 py-4 rounded-2xl shadow-lg border border-white/20 font-medium flex items-center justify-between"
+                  className="w-full bg-white/90 backdrop-blur-sm text-gray-900 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg border border-white/20 font-medium flex items-center justify-between text-sm sm:text-base"
                 >
                   <span>🔍 Filters & Sort</span>
                   <span className={`transform transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`}>
@@ -860,30 +860,30 @@ const CollectionPage = () => {
                 </button>
               </div>
 
-              <div className={`bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8 sticky top-6 ${showFilters || 'max-lg:hidden'}`}>
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 flex items-center">
-                    <span className="mr-3">🎛️</span>
+              <div className={`bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 md:p-8 lg:sticky lg:top-6 ${showFilters || 'max-lg:hidden'}`}>
+                <div className="flex items-center justify-between mb-4 sm:mb-6 md:mb-8">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 flex items-center">
+                    <span className="mr-2 sm:mr-3">🎛️</span>
                     Filters
                   </h3>
                   <button
                     onClick={clearAllFilters}
-                    className="text-sm text-red-500 hover:text-red-700 transition-colors bg-red-50 px-4 py-2 rounded-full hover:bg-red-100"
+                    className="text-xs sm:text-sm text-red-500 hover:text-red-700 transition-colors bg-red-50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-red-100"
                   >
                     Clear All
                   </button>
                 </div>
 
                 {/* Sort By */}
-                <div className="mb-8">
-                  <label className="block text-sm font-bold text-gray-900 mb-4 flex items-center">
+                <div className="mb-4 sm:mb-6 md:mb-8">
+                  <label className="block text-xs sm:text-sm font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4 flex items-center">
                     <span className="mr-2">📊</span>
                     Sort By
                   </label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full p-4 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-300 text-gray-900 shadow-sm"
+                    className="w-full p-2.5 sm:p-3 md:p-4 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-300 text-gray-900 shadow-sm text-sm sm:text-base"
                   >
                     <option value="newest">✨ Newest First</option>
                     <option value="price-low">💰 Price: Low to High</option>
@@ -893,30 +893,30 @@ const CollectionPage = () => {
                 </div>
 
                 {/* Price Range */}
-                <div className="mb-8">
-                  <label className="block text-sm font-bold text-gray-900 mb-4 flex items-center">
+                <div className="mb-4 sm:mb-6 md:mb-8">
+                  <label className="block text-xs sm:text-sm font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4 flex items-center">
                     <span className="mr-2">💵</span>
                     Price Range
                   </label>
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-4">
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center space-x-2 sm:space-x-4">
                       <div className="flex-1">
                         <input
                           type="number"
-                          placeholder="Min Price"
+                          placeholder="Min"
                           value={priceRange.min}
                           onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
-                          className="w-full p-3 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-300"
+                          className="w-full p-2 sm:p-3 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg sm:rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-300"
                         />
                       </div>
-                      <span className="text-slate-500 font-medium">to</span>
+                      <span className="text-slate-500 font-medium text-xs sm:text-sm">to</span>
                       <div className="flex-1">
                         <input
                           type="number"
-                          placeholder="Max Price"
+                          placeholder="Max"
                           value={priceRange.max}
                           onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
-                          className="w-full p-3 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-300"
+                          className="w-full p-2 sm:p-3 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg sm:rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-300"
                         />
                       </div>
                     </div>
@@ -925,8 +925,8 @@ const CollectionPage = () => {
 
                 {/* Colors Filter - WITH SEARCH BAR */}
                 {availableColors.length > 0 && (
-                  <div className="mb-8">
-                    <label className="block text-sm font-bold text-gray-900 mb-4 flex items-center">
+                  <div className="mb-4 sm:mb-6 md:mb-8">
+                    <label className="block text-xs sm:text-sm font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4 flex items-center">
                       <span className="mr-2">🎨</span>
                       Colors ({availableColors.filter(color => 
                         color.name.toLowerCase().includes(colorSearchTerm.toLowerCase())
@@ -934,26 +934,26 @@ const CollectionPage = () => {
                     </label>
                     
                     {/* Color Search Bar */}
-                    <div className="relative mb-4">
+                    <div className="relative mb-3 sm:mb-4">
                       <input
                         type="text"
                         placeholder="Search colors..."
                         value={colorSearchTerm}
                         onChange={(e) => setColorSearchTerm(e.target.value)}
-                        className="w-full p-3 pl-10 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-300"
+                        className="w-full p-2 sm:p-3 pl-8 sm:pl-10 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg sm:rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-300"
                       />
                      
                       {colorSearchTerm && (
                         <button
                           onClick={() => setColorSearchTerm('')}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                         >
                           ✕
                         </button>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 max-h-64 overflow-y-auto custom-scrollbar p-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4 max-h-48 sm:max-h-64 overflow-y-auto custom-scrollbar p-1 sm:p-2">
                       {availableColors
                         .filter(color => 
                           color.name.toLowerCase().includes(colorSearchTerm.toLowerCase())
@@ -962,7 +962,7 @@ const CollectionPage = () => {
                         <button
                           key={`${color.name}-${index}`}
                           onClick={() => handleColorChange(color.name)}
-                          className={`relative flex flex-col items-center p-4 rounded-2xl transition-all duration-300 border-2 ${
+                          className={`relative flex flex-col items-center p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl transition-all duration-300 border-2 ${
                             selectedColors.includes(color.name) 
                               ? 'border-slate-600 bg-slate-50 shadow-lg' 
                               : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -971,7 +971,7 @@ const CollectionPage = () => {
                         >
                           {/* Color Circle */}
                           <div 
-                            className="w-12 h-12 rounded-full shadow-lg border-4 border-white mb-3 flex-shrink-0"
+                            className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full shadow-lg border-2 sm:border-4 border-white mb-1.5 sm:mb-2 md:mb-3 flex-shrink-0"
                             style={{ 
                               backgroundColor: color.hex && color.hex.startsWith('#') ? color.hex : '#' + (color.hex || '000000').replace('#', ''),
                               boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2)'
@@ -979,12 +979,12 @@ const CollectionPage = () => {
                           ></div>
                           
                           {/* Color Name */}
-                          <span className="text-xs font-medium text-gray-800 text-center leading-tight max-w-full break-words">
+                          <span className="text-[8px] sm:text-[10px] md:text-xs font-medium text-gray-800 text-center leading-tight max-w-full break-words">
                           </span>
                           
                           {/* Selected Indicator */}
                           {selectedColors.includes(color.name) && (
-                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-slate-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
+                            <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 bg-slate-600 text-white rounded-full flex items-center justify-center text-[8px] sm:text-xs font-bold shadow-lg">
                               ✓
                             </div>
                           )}
@@ -1090,14 +1090,14 @@ const CollectionPage = () => {
             {/* Products Section - Same as before */}
             <div className="lg:w-3/4">
               {/* Results Header */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 p-8 mb-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-lg border border-white/20 p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 md:mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                   <div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                      {filteredProducts.length} Products Found
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+                      {filteredProducts.length} Products
                     </h2>
-                    <p className="text-slate-600">
-                      Showing <span className="font-semibold">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredProducts.length)}</span> - <span className="font-semibold">{Math.min(currentPage * itemsPerPage, filteredProducts.length)}</span> of <span className="font-semibold">{filteredProducts.length}</span> results
+                    <p className="text-xs sm:text-sm text-slate-600">
+                      Showing <span className="font-semibold">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredProducts.length)}</span> - <span className="font-semibold">{Math.min(currentPage * itemsPerPage, filteredProducts.length)}</span> of <span className="font-semibold">{filteredProducts.length}</span>
                     </p>
                   </div>
                   
@@ -1112,7 +1112,7 @@ const CollectionPage = () => {
               </div>
 
               {/* Products Grid */}
-              <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-8 mb-12">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8 mb-8 sm:mb-12">
                 {productsLoading ? (
                   <>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((_, index) => (
@@ -1134,22 +1134,22 @@ const CollectionPage = () => {
 
               {/* No Products State */}
               {!productsLoading && filteredProducts.length === 0 && (
-                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 p-16 text-center">
-                  <div className="text-8xl mb-6">🔍</div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">No products found</h3>
-                  <p className="text-slate-600 mb-8 max-w-md mx-auto">
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-lg border border-white/20 p-8 sm:p-12 md:p-16 text-center">
+                  <div className="text-5xl sm:text-6xl md:text-8xl mb-4 sm:mb-6">🔍</div>
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">No products found</h3>
+                  <p className="text-sm sm:text-base text-slate-600 mb-6 sm:mb-8 max-w-md mx-auto px-4">
                     We couldn't find any products matching your current filters. Try adjusting your search criteria or browse our other collections.
                   </p>
-                  <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                  <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
                     <button
                       onClick={clearAllFilters}
-                      className="bg-black text-white px-8 py-4 rounded-2xl hover:bg-gray-800 transition-all duration-300 font-medium shadow-lg"
+                      className="w-full sm:w-auto bg-black text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl hover:bg-gray-800 transition-all duration-300 font-medium shadow-lg text-sm sm:text-base"
                     >
                       Clear All Filters
                     </button>
                     <button
                       onClick={() => router.push('/')}
-                      className="bg-white text-gray-900 px-8 py-4 rounded-2xl hover:bg-gray-50 transition-all duration-300 font-medium shadow-lg border border-gray-200"
+                      className="w-full sm:w-auto bg-white text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl hover:bg-gray-50 transition-all duration-300 font-medium shadow-lg border border-gray-200 text-sm sm:text-base"
                     >
                       Browse All Products
                     </button>
@@ -1159,18 +1159,19 @@ const CollectionPage = () => {
 
               {/* Pagination - Same as before */}
               {totalPages > 1 && (
-                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 p-8">
-                  <div className="flex items-center justify-center space-x-2">
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-lg border border-white/20 p-4 sm:p-6 md:p-8">
+                  <div className="flex items-center justify-center space-x-1 sm:space-x-2 flex-wrap gap-y-2">
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
-                      className={`px-6 py-3 rounded-2xl transition-all duration-300 font-medium ${
+                      className={`px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-300 font-medium text-xs sm:text-sm md:text-base ${
                         currentPage === 1
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200 hover:shadow-md'
                       }`}
                     >
-                      ← Previous
+                      <span className="hidden sm:inline">← Previous</span>
+                      <span className="sm:hidden">←</span>
                     </button>
                     
                     {[...Array(totalPages)].map((_, index) => {
@@ -1184,7 +1185,7 @@ const CollectionPage = () => {
                           <button
                             key={pageNum}
                             onClick={() => setCurrentPage(pageNum)}
-                            className={`px-4 py-3 rounded-2xl transition-all duration-300 font-medium min-w-[3rem] ${
+                            className={`px-2.5 sm:px-3 md:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-300 font-medium text-xs sm:text-sm md:text-base min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] ${
                               currentPage === pageNum
                                 ? 'bg-black text-white shadow-lg'
                                 : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200 hover:shadow-md'
@@ -1197,7 +1198,7 @@ const CollectionPage = () => {
                         pageNum === currentPage - 2 ||
                         pageNum === currentPage + 2
                       ) {
-                        return <span key={pageNum} className="px-2 text-slate-400 font-medium">...</span>;
+                        return <span key={pageNum} className="px-1 sm:px-2 text-slate-400 font-medium text-xs sm:text-base">...</span>;
                       }
                       return null;
                     })}
@@ -1205,13 +1206,14 @@ const CollectionPage = () => {
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
-                      className={`px-6 py-3 rounded-2xl transition-all duration-300 font-medium ${
+                      className={`px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-300 font-medium text-xs sm:text-sm md:text-base ${
                         currentPage === totalPages
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200 hover:shadow-md'
                       }`}
                     >
-                      Next →
+                      <span className="hidden sm:inline">Next →</span>
+                      <span className="sm:hidden">→</span>
                     </button>
                   </div>
                 </div>
