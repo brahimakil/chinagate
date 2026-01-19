@@ -47,6 +47,7 @@ cleanExpiredCarts().then((result) => {
 /* CORS configuration - allow multiple origins */
 const allowedOrigins = [
   process.env.ORIGIN_URL, // Production frontend
+  'https://chinagate-3u4s.vercel.app/',
   'https://chinadealslb.com',
   'https://www.chinadealslb.com',
   'http://localhost:3000', // Local development
