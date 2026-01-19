@@ -73,7 +73,7 @@ const Header = () => {
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <div className="text-base font-bold text-slate-800 leading-tight">CHINA GATE</div>
+                  <div className="text-base font-bold text-slate-800 leading-tight">CHINA DEALS LB</div>
                   <div className="text-[9px] text-slate-500 font-medium">E-COMMERCE</div>
                 </div>
               </div>
@@ -109,7 +109,7 @@ const Header = () => {
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <div className="text-xl font-bold text-slate-800 leading-tight">CHINA GATE</div>
+                    <div className="text-xl font-bold text-slate-800 leading-tight">CHINA DEALS LB</div>
                     <div className="text-xs text-slate-500 font-medium">E-COMMERCE</div>
                   </div>
                 </div>

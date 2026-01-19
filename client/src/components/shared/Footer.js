@@ -50,7 +50,7 @@ const Footer = () => {
           ))}
         </div>
         <hr />
-        <p className="text-center">&copy; {year} China Gate. All rights reserved.</p>
+        <p className="text-center">&copy; {year} China Deals LB. All rights reserved.</p>
       </div>
     </footer>
   );

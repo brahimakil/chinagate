@@ -5,29 +5,27 @@ import { Toaster } from "react-hot-toast";
 import BottomNav from "@/components/shared/BottomNav";
 
 export const metadata = {
-  metadataBase: new URL("https://canim-csr.vercel.app"),
-  title: "Canim - Shop & eCommerce React Template",
+  metadataBase: new URL("https://chinadealslb.com"),
+  title: "China Deals LB - Your Premium Shopping Destination",
   description:
-    "Buy Canim - Shop & eCommerce Next.Js Template by Hasibul Islam. Canim | Shop & eCommerce React Template - a responsive React template. Canim is built with the latest Next.Js 13 App Directory",
+    "Discover amazing deals on quality products at China Deals LB. Shop electronics, fashion, home goods and more with fast shipping to Lebanon.",
   openGraph: {
-    title: "Canim - Shop & eCommerce React Template",
+    title: "China Deals LB - Your Premium Shopping Destination",
     description:
-      "Buy Canim - Shop & eCommerce Next.Js Template by Hasibul Islam. Canim | Shop & eCommerce React Template - a responsive React template. Canim is built with the latest Next.Js 13 App Directory",
-    url: "https://canim-csr.vercel.app",
-    siteName: "Canim Template",
-    images:
-      "https://github.com/devhasibulislam/canim-ecommerce/blob/master/client/public/og.png?raw=true",
+      "Discover amazing deals on quality products at China Deals LB. Shop electronics, fashion, home goods and more with fast shipping to Lebanon.",
+    url: "https://chinadealslb.com",
+    siteName: "China Deals LB",
+    images: "/og.png",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    site: "@devhasibulislam",
-    title: "Canim - Shop & eCommerce React Template",
+    site: "@chinadealslb",
+    title: "China Deals LB - Your Premium Shopping Destination",
     description:
-      "Buy Canim - Shop & eCommerce Next.Js Template by Hasibul Islam. Canim | Shop & eCommerce React Template - a responsive React template. Canim is built with the latest Next.Js 13 App Directory",
-    image:
-      "https://github.com/devhasibulislam/canim-ecommerce/blob/master/client/public/og.png?raw=true",
+      "Discover amazing deals on quality products at China Deals LB. Shop electronics, fashion, home goods and more with fast shipping to Lebanon.",
+    image: "/og.png",
   },
 };
 

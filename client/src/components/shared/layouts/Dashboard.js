@@ -191,9 +191,9 @@ const Dashboard = ({ children }) => {
           {!sidebarCollapsed && (
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">CG</span>
+                <span className="text-white font-bold text-sm">CD</span>
               </div>
-              <span className="font-semibold text-gray-900">China Gate</span>
+              <span className="font-semibold text-gray-900">China Deals LB</span>
             </div>
           )}
           <button
