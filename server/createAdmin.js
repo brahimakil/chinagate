@@ -4,13 +4,13 @@ const User = require('./models/user.model');
 
 mongoose.connect(process.env.ATLAS_URI).then(async () => {
   const admin = new User({
-    name: 'China Gate Admin',
-    email: 'admin@chinagate.com', 
+    name: 'China Deals LB Admin',
+    email: 'admin@chinadealslb.com', 
     password: 'Admin@123',
     phone: '+961123456789',
     role: 'admin'
   });
   await admin.save();
-  console.log('✅ Admin created: admin@chinagate.com / Admin@123');
+  console.log('✅ Admin created: admin@chinadealslb.com / Admin@123');
   process.exit();
 });

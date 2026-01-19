@@ -20,7 +20,7 @@ const systemSchema = new mongoose.Schema(
       overlayColor: { type: String, default: "rgba(0, 0, 0, 0.5)" },
       textColor: { type: String, default: "#FFFFFF" },
       badge: { type: String, default: "WELCOME TO OUR STORE" },
-      title: { type: String, default: "🏪 Welcome to China Gate" },
+      title: { type: String, default: "🏪 Welcome to China Deals LB" },
       subtitle: { type: String, default: "Your One-Stop Shop for Quality Products" },
       description: { type: String, default: "Discover amazing products curated just for you. Shop with confidence!" },
     },

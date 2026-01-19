@@ -12,7 +12,7 @@ exports.getSettings = async (req, res) => {
         overlayColor: "rgba(0, 0, 0, 0.5)", 
         textColor: "#FFFFFF",
         badge: "WELCOME TO OUR STORE",
-        title: "🏪 Welcome to China Gate",
+        title: "🏪 Welcome to China Deals LB",
         subtitle: "Your One-Stop Shop for Quality Products",
         description: "Discover amazing products curated just for you. Shop with confidence!",
       },
