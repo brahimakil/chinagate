@@ -184,7 +184,9 @@ exports.resetPassword = async (req, res) => {
 
 /* login persistance */
 exports.persistLogin = async (req, res) => {
-  const user = await User.findById(req.user._id).populate([
+  const user = await User.findById(req.user._id)
+    .select("-password -resetPasswordToken -resetPasswordExpires")
+    .populate([
     {
       path: "cart",
       populate: [

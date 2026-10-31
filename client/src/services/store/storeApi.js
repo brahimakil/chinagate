@@ -15,7 +15,7 @@ const storeApi = canimApi.injectEndpoints({
         body: store,
       }),
 
-      invalidatesTags: ["Store", "User"],
+      invalidatesTags: ["Store"],
     }),
 
     // get all stores
@@ -39,7 +39,7 @@ const storeApi = canimApi.injectEndpoints({
         body,
       }),
 
-      invalidatesTags: ["Store", "User"],
+      invalidatesTags: ["Store"],
     }),
 
     // get a store
@@ -62,7 +62,7 @@ const storeApi = canimApi.injectEndpoints({
         },
       }),
 
-      invalidatesTags: ["Store", "User"],
+      invalidatesTags: ["Store"],
     }),
   }),
 });

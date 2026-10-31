@@ -28,7 +28,7 @@ const categoryApi = canimApi.injectEndpoints({
         body: category,
       }),
 
-      invalidatesTags: ["Category", "User"],
+      invalidatesTags: ["Category"],
     }),
 
     // get all categories
@@ -52,7 +52,7 @@ const categoryApi = canimApi.injectEndpoints({
         body,
       }),
 
-      invalidatesTags: ["Category", "User"],
+      invalidatesTags: ["Category"],
     }),
 
     // get a category
@@ -75,7 +75,7 @@ const categoryApi = canimApi.injectEndpoints({
         },
       }),
 
-      invalidatesTags: ["Category", "User"],
+      invalidatesTags: ["Category"],
     }),
   }),
 });

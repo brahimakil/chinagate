@@ -28,7 +28,7 @@ const brandApi = canimApi.injectEndpoints({
         body,
       }),
 
-      invalidatesTags: ["Brand", "User"],
+      invalidatesTags: ["Brand"],
     }),
 
     // get all brands
@@ -52,7 +52,7 @@ const brandApi = canimApi.injectEndpoints({
         body,
       }),
 
-      invalidatesTags: ["Brand", "User"],
+      invalidatesTags: ["Brand"],
     }),
 
     // get a brand
@@ -75,7 +75,7 @@ const brandApi = canimApi.injectEndpoints({
         },
       }),
 
-      invalidatesTags: ["Brand", "User"],
+      invalidatesTags: ["Brand"],
     }),
   }),
 });

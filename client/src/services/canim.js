@@ -19,6 +19,15 @@ export const canimApi = createApi({
   reducerPath: "canimApi",
   baseQuery: fetchBaseQuery({
     baseUrl: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+    // Single source of truth for auth: every request carries the token when
+    // one exists, so no call can silently go out unauthenticated.
+    prepareHeaders: (headers) => {
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("accessToken");
+        if (token) headers.set("authorization", `Bearer ${token}`);
+      }
+      return headers;
+    },
   }),
   tagTypes: [
     "User",

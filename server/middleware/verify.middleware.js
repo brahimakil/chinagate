@@ -19,13 +19,15 @@ const { promisify } = require("util");
 
 async function verify(req, res, next) {
   try {
-    // catch the token from user header
-    const token = req.headers?.authorization?.split(" ")[1];
+    // catch the token from user header (tolerate extra spaces / lowercase scheme)
+    const header = req.headers?.authorization || "";
+    const token = header.replace(/^Bearer\s+/i, "").trim();
 
     // no token explicitly give error
-    if (!token) {
+    if (!token || token === "null" || token === "undefined") {
       return res.status(401).json({
         acknowledgement: false,
+        code: "NO_TOKEN",
         message: "Unauthorized",
         description: "No token found to persist an existing user for long time",
       });
@@ -40,10 +42,15 @@ async function verify(req, res, next) {
 
     next();
   } catch (error) {
+    const expired = error?.name === "TokenExpiredError";
+
     res.status(401).json({
       acknowledgement: false,
+      code: expired ? "TOKEN_EXPIRED" : "TOKEN_INVALID",
       message: "Unauthorized",
-      description: "Sign in your account to continue",
+      description: expired
+        ? "Your session has expired. Please sign in again."
+        : "Sign in your account to continue",
     });
   }
 }

@@ -28,7 +28,10 @@ const productApi = canimApi.injectEndpoints({
         body,
       }),
 
-      invalidatesTags: ["Product", "Brand", "Category", "Store", "User"],
+      // Catalog changes don't touch the signed-in user: never invalidate
+      // "User" here or every save re-runs GET /user/me and a single blip
+      // logs the admin out.
+      invalidatesTags: ["Product", "Brand", "Category", "Store"],
     }),
 
     // get all products
@@ -53,7 +56,10 @@ const productApi = canimApi.injectEndpoints({
         body: data, // This should be the FormData object
       }),
 
-      invalidatesTags: ["Product", "Brand", "Category", "Store", "User"],
+      // Catalog changes don't touch the signed-in user: never invalidate
+      // "User" here or every save re-runs GET /user/me and a single blip
+      // logs the admin out.
+      invalidatesTags: ["Product", "Brand", "Category", "Store"],
     }),
 
     // get a single product
@@ -86,7 +92,10 @@ const productApi = canimApi.injectEndpoints({
         },
       }),
 
-      invalidatesTags: ["Product", "Brand", "Category", "Store", "User"],
+      // Catalog changes don't touch the signed-in user: never invalidate
+      // "User" here or every save re-runs GET /user/me and a single blip
+      // logs the admin out.
+      invalidatesTags: ["Product", "Brand", "Category", "Store"],
     }),
   }),
 });
